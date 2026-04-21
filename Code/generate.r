@@ -1,6 +1,6 @@
 library(IsingSampler)
 
-generate_fcir_data <- function(N, P, L, K, B_reps, seed, p_edge, filename){
+generate_fcir_data <- function(N, P, L, K, B_reps, seed,filename){
   # This function generates site-varying Ising data based on the Fourth-Corner Ising Regression (FCIR) formulation.
   # It integrates environment covariates (X) and species functional traits (T) to dynamically shape
   # both the main occurrence effects and the pairwise species interaction network.
