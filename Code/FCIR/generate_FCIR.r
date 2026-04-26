@@ -5,12 +5,6 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   
   set.seed(seed)
   
-  # 1. Initialize Matrices
-  Y = array(data = NA, dim = c(N, P, B_reps))
-  X = matrix(rnorm(N * L), nrow = N, ncol = L)
-  X[,1] = 1 
-  Tr = matrix(runif(P * K, min = -1, max = 1), nrow = P, ncol = K)
-  
   # 2. Helper function to generate sparse parameters
   generate_sparse_params <- function(n_elements, prob_zero, min_mag, max_mag) {
     is_zero = rbinom(n_elements, 1, prob_zero)
@@ -20,12 +14,20 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   }
   
   # 3. Generate Main Effect Parameters
-  beta_0 = generate_sparse_params(L, prob_zero = 0.3, min_mag = 0.5, max_mag = 1.5)
+  beta_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.5, max_mag = 1.5)
   B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.2, max_mag = 0.5), nrow = L, ncol = K)
   
   # 4. Generate Interaction Effect Parameters (NO Adj MATRIX)
-  alpha_0 = generate_sparse_params(L, prob_zero = 0.3, min_mag = 0.4, max_mag = 1.0)
+  alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.4, max_mag = 1.0)
   A_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.5, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
+  
+  
+  # 1. Initialize Matrices
+  Y = array(data = NA, dim = c(N, P, B_reps))
+  X = matrix(rnorm(N * L), nrow = N, ncol = L)
+  X[,1] = 1 
+  Tr = matrix(runif(P * K, min = -1, max = 1), nrow = P, ncol = K)
+  
   
   # 5. Pre-compute pairwise trait differences
   Delta = array(0, dim = c(P, P, K))

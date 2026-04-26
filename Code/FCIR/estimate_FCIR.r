@@ -63,7 +63,7 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr){
   # 4. Fit Unpenalized Logistic Regression
   # Note: '+ 0' is added to the formula because the intercept is already implicitly 
   # included in the design matrix (first column of x_s is 1)
-  logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial, control = glm.control(maxit = 100))
+  logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial)
   
   # 5. Extract and reshape parameters
   est_coefs = logistic_reg$coefficients
