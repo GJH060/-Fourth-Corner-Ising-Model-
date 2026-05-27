@@ -2,16 +2,20 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
+project_root = "E:/RStudio/thesis"
+rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
+plot_dir = file.path(project_root, "Simulation_Results", "plots")
+
 generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
                                                  Ps = c(30, 60),
                                                  L = 3, K = 2,
                                                  B_reps = 1000,
-                                                 result_dir = "../../Simulation_Results",
-                                                 output_dir = "../../Convergence_Plots",
+                                                 result_dir = rdata_dir,
+                                                 output_dir = plot_dir,
                                                  method = "unpenalized") {
   
   if (!dir.exists(output_dir)) {
-    dir.create(output_dir)
+    dir.create(output_dir, recursive = TRUE)
   }
   
   df_list <- list() 
@@ -20,9 +24,9 @@ generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
     for (p in Ps) {
       
       if (method == "unpenalized") {
-        filename = paste0(result_dir, "/FCIR_estimates_N", n, "_P", p, ".Rdata")
+        filename = file.path(result_dir, paste0("FCIR_estimates_N", n, "_P", p, ".Rdata"))
       } else {
-        filename = paste0(result_dir, "/FCIR_estimates_penalized_N", n, "_P", p, ".Rdata")
+        filename = file.path(result_dir, paste0("FCIR_estimates_penalized_N", n, "_P", p, ".Rdata"))
       }
       if (!file.exists(filename)) {
         warning(paste("File not found:", filename, "- Skipping."))
@@ -119,7 +123,7 @@ generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
     safe_param_name = gsub("\\]", "", safe_param_name)
     safe_param_name = gsub(",", "_", safe_param_name)
     
-    plot_filename = paste0(output_dir, "/Convergence_MixedError_", method, "_", safe_param_name, ".png")
+    plot_filename = file.path(output_dir, paste0("Convergence_MixedError_", method, "_", safe_param_name, ".png"))
     
     ggsave(filename = plot_filename, plot = plot_obj, width = 10, height = 6, dpi = 300)
     

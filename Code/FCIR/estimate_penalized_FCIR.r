@@ -1,11 +1,12 @@
 library(glmnet)
 
-estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min"){
+estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", use_cv = TRUE){
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column should be 1s for intercept)
   # Tr: P x K species traits matrix
   # alpha: Elastic net mixing parameter (1 for lasso, 0 for ridge)
-  # lambda: "lambda.min" or "lambda.1se" for cv.glmnet
+  # lambda: "lambda.min"/"lambda.1se" when use_cv = TRUE, or a numeric value when use_cv = FALSE
+  # use_cv: if TRUE, choose coefficients from cv.glmnet; if FALSE, fit glmnet at the fixed lambda
   
   N = nrow(Y)
   P = ncol(Y)
@@ -71,11 +72,20 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min"){
   penalty_factor = rep(1, n_params)
   penalty_factor[1] = 0 
   
-  cv_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE, 
-                     penalty.factor = penalty_factor, alpha = alpha)
+  if (use_cv) {
+    penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE, 
+                              penalty.factor = penalty_factor, alpha = alpha)
+  } else {
+    if (!is.numeric(lambda)) {
+      stop("When use_cv = FALSE, lambda must be a numeric value.")
+    }
+    penalized_fit = glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
+                           penalty.factor = penalty_factor, alpha = alpha,
+                           lambda = lambda)
+  }
   
   # 5. Extract and reshape parameters
-  est_coefs = as.numeric(coef(cv_fit, s = lambda))
+  est_coefs = as.numeric(coef(penalized_fit, s = lambda))
   
   # Note: coef(cv_fit) returns a vector that includes an explicit Intercept term at the start.
   # Since we used intercept = FALSE, this first element is always 0.
@@ -97,6 +107,10 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min"){
     B_mat = hat_B_mat,
     alpha_0 = hat_alpha_0,
     A_mat = hat_A_mat,
-    cv_model = cv_fit # Return the original cv.glmnet model for further inspection
+    penalized_model = penalized_fit,
+    cv_model = if (use_cv) penalized_fit else NULL,
+    use_cv = use_cv,
+    alpha = alpha,
+    lambda = lambda
   ))
 }

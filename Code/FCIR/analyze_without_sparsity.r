@@ -2,9 +2,23 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
+project_root = "E:/RStudio/thesis"
+rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Dense")
+plot_dir = file.path(project_root, "Simulation_Results", "plots")
+if (!dir.exists(plot_dir)) {
+  dir.create(plot_dir, recursive = TRUE)
+}
+
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(30, 60)
-methods = c("unpenalized") 
+ridge_lambdas = c(0.5, 1, 2)
+
+format_lambda_label <- function(lambda_value) {
+  gsub("\\.", "p", as.character(lambda_value))
+}
+
+ridge_methods = paste0("ridge_lambda", sapply(ridge_lambdas, format_lambda_label))
+methods = c("unpenalized", ridge_methods) 
 
 for (method in methods) {
   for (n in Ns) {
@@ -12,9 +26,14 @@ for (method in methods) {
       
       # Read the Dense datasets
       if (method == "unpenalized") {
-        filename = paste0("../../Simulation_Results/FCIR_estimates_Dense_N", n, "_P", p, ".Rdata")
+        filename = file.path(rdata_dir, paste0("FCIR_estimates_Dense_N", n, "_P", p, ".Rdata"))
+      } else if (method == "penalized") {
+        filename = file.path(rdata_dir, paste0("FCIR_estimates_penalized_Dense_N", n, "_P", p, ".Rdata"))
+      } else if (grepl("^ridge_lambda", method)) {
+        filename = file.path(rdata_dir, paste0("FCIR_estimates_", method, "_Dense_N", n, "_P", p, ".Rdata"))
       } else {
-        filename = paste0("../../Simulation_Results/FCIR_estimates_penalized_Dense_N", n, "_P", p, ".Rdata")
+        warning(paste("Unknown method:", method, "- Skipping."))
+        next
       }
       
       if (!file.exists(filename)) {
@@ -95,7 +114,7 @@ for (method in methods) {
               strip.text = element_text(face = "bold", size = 12))
       
       # Save to a distinct filename
-      plot_filename = paste0("../../Simulation_Results/Boxplot_ALL_MixedError_Dense_", method, "_N", n, "_P", p, ".png")
+      plot_filename = file.path(plot_dir, paste0("Boxplot_ALL_MixedError_Dense_", method, "_N", n, "_P", p, ".png"))
       ggsave(filename = plot_filename, plot = plot_obj, width = 12, height = 9, dpi = 300)
       
       print(paste("--> Comprehensive DENSE Plot saved:", plot_filename))
