@@ -114,7 +114,9 @@ for (method in methods) {
               strip.text = element_text(face = "bold", size = 12))
       
       # Save to a distinct filename
-      plot_filename = file.path(plot_dir, paste0("Boxplot_ALL_MixedError_Dense_", method, "_N", n, "_P", p, ".png"))
+      mixederr_dir = file.path(plot_dir, "boxplots_allparameter_mixederror_dense")
+      if (!dir.exists(mixederr_dir)) dir.create(mixederr_dir, recursive = TRUE)
+      plot_filename = file.path(mixederr_dir, paste0("Boxplot_ALL_MixedError_Dense_", method, "_N", n, "_P", p, ".png"))
       ggsave(filename = plot_filename, plot = plot_obj, width = 12, height = 9, dpi = 300)
       
       print(paste("--> Comprehensive DENSE Plot saved:", plot_filename))

@@ -11,7 +11,7 @@ generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
                                                  L = 3, K = 2,
                                                  B_reps = 1000,
                                                  result_dir = rdata_dir,
-                                                 output_dir = plot_dir,
+                                                 output_dir = file.path(plot_dir, "boxplots_perparameter_sparse"),
                                                  method = "unpenalized") {
   
   if (!dir.exists(output_dir)) {
