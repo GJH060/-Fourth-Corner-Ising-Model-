@@ -86,8 +86,8 @@ for (n in Ns) {
       print(paste("Unpenalized Dense estimates already exist for N =", n, ", P =", p, "- Skipping."))
     }
     
-    # ---------------- Ridge with fixed lambda scaled by 1/sqrt(N*P) ----------------
-    # glmnet minimises the MEAN deviance, so dividing the nominal lambda by sqrt(N*P)
+    # ---------------- Ridge with fixed lambda scaled by 1/(N*P) ----------------
+    # glmnet minimises the MEAN deviance, so dividing the nominal lambda by (N*P)
     # makes the penalty shrink with sample size: a nominal lambda then yields a
     # consistent estimator (error -> 0 as N grows) while staying CV-comparable at
     # finite N. Filenames/metadata keep the nominal lambda (lambda_value).
@@ -113,7 +113,7 @@ for (n in Ns) {
             X = X,
             Tr = Tr,
             alpha = 0,
-            lambda = lambda_value / sqrt(n * p),
+            lambda = lambda_value / (n * p),
             use_cv = FALSE
           )
           
@@ -125,8 +125,8 @@ for (n in Ns) {
         
         penalty = "ridge"
         alpha_value = 0
-        lambda_effective = lambda_value / sqrt(n * p)   # actual lambda passed to glmnet
-        lambda_scaling = "lambda_value / sqrt(N*P)"
+        lambda_effective = lambda_value / (n * p)   # actual lambda passed to glmnet
+        lambda_scaling = "lambda_value / (N*P)"
         save(est_beta_0, est_B_mat, est_alpha_0, est_A_mat,
              beta_0, B_mat, alpha_0, A_mat,
              N = n, P = p, L, K, B_reps, seed,
