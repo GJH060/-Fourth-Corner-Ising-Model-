@@ -18,7 +18,9 @@ format_lambda_label <- function(lambda_value) {
 }
 
 ridge_methods = paste0("ridge_lambda", sapply(ridge_lambdas, format_lambda_label))
-methods = c("unpenalized", ridge_methods) 
+# Unpenalized all-parameter plots live in boxplots_allparam_unpenalized_dense;
+# this script only produces the fixed-lambda ridge all-parameter plots.
+methods = ridge_methods
 
 for (method in methods) {
   for (n in Ns) {
@@ -114,7 +116,7 @@ for (method in methods) {
               strip.text = element_text(face = "bold", size = 12))
       
       # Save to a distinct filename
-      mixederr_dir = file.path(plot_dir, "boxplots_allparameter_mixederror_dense")
+      mixederr_dir = file.path(plot_dir, "boxplots_allparam_ridge_fixedlambda_dense")
       if (!dir.exists(mixederr_dir)) dir.create(mixederr_dir, recursive = TRUE)
       plot_filename = file.path(mixederr_dir, paste0("Boxplot_ALL_MixedError_Dense_", method, "_N", n, "_P", p, ".png"))
       ggsave(filename = plot_filename, plot = plot_obj, width = 12, height = 9, dpi = 300)
