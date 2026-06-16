@@ -110,7 +110,7 @@ for (method in methods) {
             strip.background = element_rect(fill = "lightgray", color = NA),
             strip.text = element_text(face = "bold", size = 12))
     
-    mixederr_dir = file.path(plot_dir, "boxplots_allparameter_mixederror")
+    mixederr_dir = file.path(plot_dir, "boxplots_allparameter_mixederror_sparse")
     if (!dir.exists(mixederr_dir)) dir.create(mixederr_dir, recursive = TRUE)
     plot_filename = file.path(mixederr_dir, paste0("Boxplot_ALL_MixedError_", method, "_N", n, "_P", p, ".png"))
     ggsave(filename = plot_filename, plot = plot_obj, width = 12, height = 9, dpi = 300)

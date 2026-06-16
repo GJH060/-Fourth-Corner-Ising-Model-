@@ -4,7 +4,7 @@ library(dplyr)
 
 project_root = "E:/RStudio/thesis"
 rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-output_dir = file.path(project_root, "Simulation_Results", "plots", "boxplots_perparameter_ridge")
+output_dir = file.path(project_root, "Simulation_Results", "plots", "boxplots_perparameter_ridge_sparse")
 
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
