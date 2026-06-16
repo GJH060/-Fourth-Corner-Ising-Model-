@@ -7,7 +7,7 @@ Ns <- c(50, 100, 200, 400, 800)
 Ps <- c(30, 60)
 
 data_dir <- "E:/RStudio/thesis/Simulation_Results/Rdata_Dense/"
-out_dir <- "E:/RStudio/thesis/Simulation_Results/plots/"
+out_dir <- "E:/RStudio/thesis/Simulation_Results/plots/sparsity/"
 
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
