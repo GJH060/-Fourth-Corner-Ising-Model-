@@ -3,3 +3,17 @@
 .RData
 .Ruserdata
 .positai
+
+# Simulation data (large binary outputs; regenerate with main.r / main_without_sparsity.r)
+*.Rdata
+Simulation_Results/Rdata_Sparse/
+Simulation_Results/Rdata_Dense/
+
+# Diagnostic warning logs
+Simulation_Results/warnings/
+
+# Temporary / scratch scripts
+_tmp_*.R
+_chk_*.R
+_diag_*.R
+_check_*.R

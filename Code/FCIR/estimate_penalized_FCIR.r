@@ -1,12 +1,17 @@
 library(glmnet)
 
-estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", use_cv = TRUE){
+estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", use_cv = TRUE,
+                                    cv_group_by_site = TRUE){
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column should be 1s for intercept)
   # Tr: P x K species traits matrix
   # alpha: Elastic net mixing parameter (1 for lasso, 0 for ridge)
   # lambda: "lambda.min"/"lambda.1se" when use_cv = TRUE, or a numeric value when use_cv = FALSE
   # use_cv: if TRUE, choose coefficients from cv.glmnet; if FALSE, fit glmnet at the fixed lambda
+  # cv_group_by_site: when use_cv = TRUE, group the CV folds by site so all P
+  #   pseudo-likelihood rows of a site stay in one fold (TRUE = default, the
+  #   statistically correct choice here). FALSE uses glmnet's random row-level
+  #   folds and exists only to reproduce the earlier (leaky) baseline.
   
   N = nrow(Y)
   P = ncol(Y)
@@ -73,8 +78,27 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
   penalty_factor[1] = 0 
   
   if (use_cv) {
-    penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE, 
-                              penalty.factor = penalty_factor, alpha = alpha)
+    if (cv_group_by_site) {
+      # Group the cross-validation folds by site. The pseudo-likelihood design has
+      # P rows per site (rows are ordered site-by-site: rows (s-1)*P + 1 ... s*P
+      # belong to site s) that are dependent by construction -- they share x_s, and
+      # each species' presence enters the neighbour terms of the others. Random
+      # row-level folds would therefore leak information between train and test and
+      # make CV over-optimistic. Putting all P rows of a site in the same fold keeps
+      # the folds independent at the site level (sites are generated independently).
+      n_folds = min(10, N)
+      site_fold = sample(rep(seq_len(n_folds), length.out = N))
+      fold_id = rep(site_fold, each = P)
+
+      penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
+                                penalty.factor = penalty_factor, alpha = alpha,
+                                foldid = fold_id)
+    } else {
+      # Default random row-level folds: leaky for these dependent pseudo-likelihood
+      # rows, kept only to reproduce the earlier baseline.
+      penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
+                                penalty.factor = penalty_factor, alpha = alpha)
+    }
   } else {
     if (!is.numeric(lambda)) {
       stop("When use_cv = FALSE, lambda must be a numeric value.")
