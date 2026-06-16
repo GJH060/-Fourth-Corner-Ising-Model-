@@ -75,7 +75,7 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
   # (assuming the first column of X is 1s).
   # We should not penalize the global intercept term.
   penalty_factor = rep(1, n_params)
-  penalty_factor[1] = 0 
+  #penalty_factor[1] = 0 
   
   if (use_cv) {
     if (cv_group_by_site) {
@@ -90,31 +90,53 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
       site_fold = sample(rep(seq_len(n_folds), length.out = N))
       fold_id = rep(site_fold, each = P)
 
-      penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
-                                penalty.factor = penalty_factor, alpha = alpha,
+      penalized_fit = cv.glmnet(glm_X[,-1,drop=FALSE],
+                                glm_Y,
+                                family = "binomial",
+                                intercept = TRUE,
+                                #standardize = FALSE,
+                                penalty.factor = penalty_factor[-length(penalty_factor)],
+                                alpha = alpha,
                                 foldid = fold_id)
     } else {
       # Default random row-level folds: leaky for these dependent pseudo-likelihood
       # rows, kept only to reproduce the earlier baseline.
-      penalized_fit = cv.glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
-                                penalty.factor = penalty_factor, alpha = alpha)
+      penalized_fit = cv.glmnet(glm_X[,-1,drop=FALSE],
+                                glm_Y,
+                                family = "binomial",
+                                intercept = TRUE,
+                                #standardize = FALSE,
+                                penalty.factor = penalty_factor[-length(penalty_factor)],
+                                alpha = alpha)
     }
   } else {
     if (!is.numeric(lambda)) {
       stop("When use_cv = FALSE, lambda must be a numeric value.")
     }
-    penalized_fit = glmnet(glm_X, glm_Y, family = "binomial", intercept = FALSE,
-                           penalty.factor = penalty_factor, alpha = alpha,
+    penalized_fit = glmnet(glm_X[,-1,drop=FALSE],
+                           glm_Y,
+                           family = "binomial",
+                           intercept = TRUE,
+                           #standardize = FALSE,
+                           penalty.factor = penalty_factor[-length(penalty_factor)],
+                           alpha = alpha,
+                           #thresh = 1e-12,
                            lambda = lambda)
-  }
+  
+    # penalized_fit <- bigGlm(glm_X[,-1,drop=FALSE], 
+    #                         glm_Y, 
+    #                         family = "binomial", 
+    #                         path = FALSE)
+    # penalized_fit <- glm(glm_Y ~ glm_X + 0, family = binomial)
+    }
   
   # 5. Extract and reshape parameters
-  est_coefs = as.numeric(coef(penalized_fit, s = lambda))
+  est_coefs = as.numeric(coef(penalized_fit, s = lambda, exact = TRUE))
   
   # Note: coef(cv_fit) returns a vector that includes an explicit Intercept term at the start.
   # Since we used intercept = FALSE, this first element is always 0.
   # We drop it to match our glm_X columns.
-  est_coefs = est_coefs[-1]
+  #est_coefs = est_coefs[-1]
   
   idx = 1
   hat_beta_0  = est_coefs[idx:(idx + L - 1)]; idx = idx + L
