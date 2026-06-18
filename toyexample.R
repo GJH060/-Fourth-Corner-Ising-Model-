@@ -10,7 +10,7 @@ source("Code/FCIR/estimate_FCIR.r")
 ##------------------------
 #' # Simulate multivariate binary data from FCIR model
 ##------------------------
-Ns <- 400
+Ns <- 800
 Ps <- 60
 
 # Global fixed parameters
@@ -47,7 +47,7 @@ fit_FCIR_unpen <- estimate_unpenalized_FCIR(Y = Y[,,1],
 fit_FCIR_ridgelambda <- estimate_penalized_FCIR(Y = Y[,,1],
                                                  X = X,
                                                  Tr = Tr,
-                                                 alpha = 0,
+                                                 alpha = 1e-12,
                                                  lambda = 0.5 / (Ns * Ps),
                                                  use_cv = FALSE)
 
@@ -66,7 +66,6 @@ fit_FCIR_ridgelambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
                                                   cv_group_by_site = TRUE,
                                                   use_cv = TRUE)
 
-
 fit_FCIR_lassolambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
                                                 X = X,
                                                 Tr = Tr,
@@ -74,6 +73,17 @@ fit_FCIR_lassolambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
                                                 lambda = "lambda.min",
                                                 cv_group_by_site = TRUE,
                                                 use_cv = TRUE)
+
+
+fit_FCIR_stepAIC <- glm(y ~ . -1, 
+                       data = data.frame(y = fit_FCIR_unpen$glm_model$y, 
+                                         fit_FCIR_unpen$glm_model %>% model.matrix),
+                       family = binomial)
+fit_FCIR_stepAIC <- MASS::stepAIC(fit_FCIR_stepAIC, direction = "backward", trace = TRUE) 
+all_names <- names(coef(fit_FCIR_unpen$glm_model))
+final_coefs <- setNames(rep(0, length(all_names)), all_names)
+final_coefs[names(coef(fit_FCIR_stepAIC))] <- coef(fit_FCIR_stepAIC)
+final_coefs
 
 
 ##------------------------
@@ -106,5 +116,20 @@ data.frame(true = A_mat %>% as.vector,
 
 
 fit_FCIR_lassolambdacv$cv_model %>% plot
-#fit_FCIR_ridgelambdacv$cv_model %>% plot
+fit_FCIR_ridgelambdacv$cv_model %>% plot
 fit_FCIR_lassolambdacv$fold_id
+
+ 
+# gof <- -2*colSums(dbinom(fit_FCIR_unpen$glm_model$y, 
+#        size = 1,
+#        prob = plogis(as.matrix(model.matrix(fit_FCIR_unpen$glm_model) %*% coef(fit_FCIR_lassolambdacv$penalized_model$glmnet.fit))),
+#        log = TRUE))
+# 
+# 
+# 
+# data.frame(lambda = fit_FCIR_lassolambdacv$cv_model$lambda,
+#            gof = gof,
+#            df = fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df,
+#            AIC = gof + 2*fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df,
+#            BIC = gof + log(Ns*Ps)*fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df) 
+# 
