@@ -32,7 +32,7 @@ if (!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
 Ns <- c(50, 100, 200, 400, 800)
 Ps <- c(30, 60)
 
-ridge_lambdas <- c(0.5, 1, 2)
+ridge_lambdas <- c(5e-3, 5e-2, 5e-1)
 
 format_lambda_label <- function(lambda_value) {
   gsub("\\.", "p", as.character(lambda_value))

@@ -1,17 +1,3 @@
-# Convergence of the derived Ising potentials theta (RMSE), per Monte Carlo replicate.
-#
-#   Main effect : theta_{s,jj}  = x_s^T beta_0 + x_s^T B t_j          (eqn 46)
-#   Interaction : theta_{s,jj'} = x_s^T alpha_0 + x_s^T A Delta_jj'   (eqn 47)
-#
-# theta is a function of the parameters; even when individual params (e.g. A in
-# the dense case) are non-identifiable / shrunk to 0 because alpha_0 and A are
-# collinear, the COMBINED theta is identifiable and should still converge. This
-# is the statistically honest quantity to report convergence on.
-#
-# For replicate b we report RMSE over all sites x (species or unordered pairs):
-#   main: sqrt( mean_{s,j}  (hat_theta_jj  - theta_jj )^2 )
-#   edge: sqrt( mean_{s,j<j'} (hat_theta_jj' - theta_jj')^2 )
-# computed via the parameter-difference form so no large theta matrix is stored.
 
 library(ggplot2)
 library(dplyr)
@@ -24,19 +10,19 @@ Ns <- c(50, 100, 200, 400, 800)
 Ps <- c(30, 60)
 
 # ---- methods: label -> file infix builder ----
-method_levels <- c("Unpenalized", "Ridge lambda=0.5", "Ridge lambda=1",
-                   "Ridge lambda=2", "Grouped-CV")
-method_fill <- c("Unpenalized" = "#9E9E9E", "Ridge lambda=0.5" = "#A6CEE3",
-                 "Ridge lambda=1" = "#5599C8", "Ridge lambda=2" = "#1F5C8B",
+method_levels <- c("Unpenalized", "Ridge lambda=0.005", "Ridge lambda=0.05",
+                   "Ridge lambda=0.5", "Grouped-CV")
+method_fill <- c("Unpenalized" = "#9E9E9E", "Ridge lambda=0.005" = "#A6CEE3",
+                 "Ridge lambda=0.05" = "#5599C8", "Ridge lambda=0.5" = "#1F5C8B",
                  "Grouped-CV" = "#33A02C")
 
 # estimate-file stem (without dir / "_N{n}_P{p}.Rdata"); infix = "" or "_Dense"
 est_stem <- function(method, infix) {
   switch(method,
     "Unpenalized"      = paste0("FCIR_estimates", infix),
-    "Ridge lambda=0.5" = paste0("FCIR_estimates_ridge_lambda0p5", infix),
-    "Ridge lambda=1"   = paste0("FCIR_estimates_ridge_lambda1", infix),
-    "Ridge lambda=2"   = paste0("FCIR_estimates_ridge_lambda2", infix),
+    "Ridge lambda=0.005" = paste0("FCIR_estimates_ridge_lambda0p005", infix),
+    "Ridge lambda=0.05"  = paste0("FCIR_estimates_ridge_lambda0p05", infix),
+    "Ridge lambda=0.5"   = paste0("FCIR_estimates_ridge_lambda0p5", infix),
     "Grouped-CV"       = paste0("FCIR_estimates_ridge_cv_grouped", infix)
   )
 }

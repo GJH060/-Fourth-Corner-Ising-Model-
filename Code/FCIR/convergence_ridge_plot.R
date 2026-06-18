@@ -12,7 +12,7 @@ if (!dir.exists(output_dir)) {
 
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(30, 60)
-ridge_lambdas = c(0.5, 1, 2)
+ridge_lambdas = c(5e-3, 5e-2, 5e-1)
 
 format_lambda_label <- function(lambda_value) {
   gsub("\\.", "p", as.character(lambda_value))
@@ -122,15 +122,28 @@ for (param in parameters) {
     "Absolute Error: (Estimated - True)"
   }
   
+  # Small N with the near-zero fixed lambda can yield separation/near-singular
+  # MPLE fits whose errors reach +/-1e4, flattening every box. Zoom the y-axis to
+  # the boxplot whisker range (per facet) so boxes are legible; the boxplot stats
+  # are still computed on the full data, only extreme fliers are clipped from view.
+  whisk = df_param %>%
+    group_by(.data$N_factor, .data$P_label, .data$Lambda_label) %>%
+    summarise(lo = quantile(.data$Error, 0.25, na.rm = TRUE) - 1.5 * IQR(.data$Error, na.rm = TRUE),
+              hi = quantile(.data$Error, 0.75, na.rm = TRUE) + 1.5 * IQR(.data$Error, na.rm = TRUE),
+              .groups = "drop")
+  ylim_param = c(min(whisk$lo, na.rm = TRUE), max(whisk$hi, na.rm = TRUE))
+
   plot_obj = ggplot(df_param, aes(x = .data$N_factor, y = .data$Error)) +
     geom_boxplot(fill = "skyblue", color = "black",
                  outlier.shape = 16, outlier.alpha = 0.3, width = 0.5) +
     geom_hline(yintercept = 0, color = "red", linetype = "dashed", linewidth = 1) +
     facet_grid(rows = vars(.data$P_label), cols = vars(.data$Lambda_label)) +
+    coord_cartesian(ylim = ylim_param) +
     theme_minimal(base_size = 14) +
     labs(title = paste("Ridge Convergence of Parameter:", param),
          x = "Sample Size (N)",
-         y = y_label) +
+         y = y_label,
+         caption = "Y-axis zoomed to boxplot whiskers; extreme outliers clipped from view (stats use all data).") +
     theme(plot.title = element_text(hjust = 0.5, face = "bold"),
           strip.background = element_rect(fill = "lightgray", color = NA),
           strip.text = element_text(face = "bold", size = 12))

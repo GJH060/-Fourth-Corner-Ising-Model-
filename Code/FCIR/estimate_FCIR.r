@@ -9,30 +9,25 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr){
   K = ncol(Tr)
   
   # 1. Pre-compute Trait Differences
-  # Calculate the absolute trait differences Delta_{jj'} for all species pairs
   Delta = array(0, dim = c(P, P, K))
   for(j in 1:P) {
     for(j_prime in 1:P) {
       Delta[j, j_prime, ] = abs(Tr[j, ] - Tr[j_prime, ])
     }
   }
-  
-  # 2. Initialize pseudo-likelihood response vector and design matrix
-  n_obs = N * P               # Total number of observations (rows) for pseudo-likelihood estimation
-  n_params = 2*L + 2*L*K      # Total number of parameters in the full model: beta_0, vec(B), alpha_0, vec(A)
+  n_obs = N * P               
+  n_params = 2*L + 2*L*K     
   
   glm_Y = numeric(n_obs)
   glm_X = matrix(0, nrow = n_obs, ncol = n_params)
   
-  # 3. Construct the designmatrix X (corresponding to the Kronecker products and block structure in the paper)
   row_idx = 1
   for(s in 1:N){
-    x_s = X[s, ]     # Environment vector for current site s
-    y_s = Y[s, ]     # Distribution of all species at current site s
-    R_s = sum(y_s)   # Species richness at current site s (used for neighbor summation)
+    x_s = X[s, ]     
+    y_s = Y[s, ]     
+    R_s = sum(y_s)  
     
     for(j in 1:P){
-      # Response variable: presence of species j at site s
       glm_Y[row_idx] = y_s[j]
       
       # --- Main Effects ---
@@ -61,8 +56,6 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr){
   }
   
   # 4. Fit Unpenalized Logistic Regression
-  # Note: '+ 0' is added to the formula because the intercept is already implicitly 
-  # included in the design matrix (first column of x_s is 1)
   logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial)
   
   # 5. Extract and reshape parameters

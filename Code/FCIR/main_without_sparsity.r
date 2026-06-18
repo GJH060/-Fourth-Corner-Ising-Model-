@@ -27,7 +27,7 @@ L = 3
 K = 2          
 B_reps = 1000  
 seed = 42      
-ridge_lambdas = c(0.5, 1, 2)
+ridge_lambdas = c(5e-3, 5e-2, 5e-1)
 
 format_lambda_label <- function(lambda_value) {
   gsub("\\.", "p", as.character(lambda_value))
