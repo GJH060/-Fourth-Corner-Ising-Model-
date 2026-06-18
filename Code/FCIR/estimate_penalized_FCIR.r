@@ -95,13 +95,17 @@ estimate_penalized_FCIR <- function(Y,
       site_fold = sample(rep(seq_len(n_folds), length.out = N))
       fold_id = rep(site_fold, each = P)
 
+      # penalized_fit = ncvreg::cv.ncvreg(glm_X[,-1,drop=FALSE],
+      #                                   glm_Y,
+      #                                   family = "binomial",
+      #                                   trace = TRUE,
+      #                                   fold = fold_id)
       penalized_fit = cv.glmnet(glm_X[,-1,drop=FALSE],
                                 glm_Y,
                                 family = "binomial",
                                 intercept = TRUE,
                                 #lambda = seq(1e-1, 1e-8, length.out = 100),
                                 #lambda.min.ratio = 1e-8,
-                                #standardize = FALSE,
                                 #penalty.factor = penalty_factor[-length(penalty_factor)],
                                 alpha = alpha,
                                 foldid = fold_id)
@@ -114,7 +118,6 @@ estimate_penalized_FCIR <- function(Y,
                                 intercept = TRUE,
                                 #lambda = seq(1e-1, 1e-8, length.out = 100),
                                 #lambda.min.ratio = 1e-8,
-                                #standardize = FALSE,
                                 #penalty.factor = penalty_factor[-length(penalty_factor)],
                                 alpha = alpha)
     }
@@ -126,12 +129,17 @@ estimate_penalized_FCIR <- function(Y,
                            glm_Y,
                            family = "binomial",
                            intercept = TRUE,
-                           #standardize = FALSE,
                            #penalty.factor = penalty_factor[-length(penalty_factor)],
                            alpha = alpha,
                            #thresh = 1e-12,
                            lambda = lambda)
-  
+    # penalized_fit = ncvreg::ncvreg(glm_X[,-1,drop=FALSE],
+    #                                glm_Y,
+    #                                family = "binomial",
+    #                                #penalty.factor = penalty_factor[-length(penalty_factor)],
+    #                                alpha = alpha,
+    #                                lambda = lambda)
+    
     # penalized_fit <- bigGlm(glm_X[,-1,drop=FALSE], 
     #                         glm_Y, 
     #                         family = "binomial", 
