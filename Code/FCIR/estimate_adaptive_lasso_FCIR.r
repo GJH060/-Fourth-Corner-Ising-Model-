@@ -63,14 +63,7 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
   # Aliased/NA initial coefficients (rank deficiency) -> treat as ~0 (heavy penalty).
   beta_init[is.na(beta_init)] <- 0
 
-  # 4. Adaptive penalty on ALL non-intercept coefficients (textbook adaptive lasso).
-  # Do NOT set penalty.factor = 0 for beta_0/alpha_0: an exactly-unpenalized block of
-  # continuous, collinear columns makes binomial cv.glmnet fail at small N (empty model
-  # -> dimnames error), and a tiny fixed factor (e.g. 1e-4) instead inflates lambda_max
-  # (~1e4x) so the path never reaches B/A (TPR ~ 0). Adaptive weights on every
-  # coefficient fix both: beta_0/alpha_0 have large initial estimates -> small weights
-  # -> effectively unshrunk, while the lambda path stays well scaled so B/A get selected.
-  # Normalize to mean 1 and cap extremes to keep glmnet's penalty rescaling stable.
+  # 4. Adaptive penalty on ALL non-intercept coefficients .
   eps <- 1e-6
   pen_factor <- 1 / (abs(beta_init) + eps)^gamma
   pen_factor <- pen_factor / mean(pen_factor)
