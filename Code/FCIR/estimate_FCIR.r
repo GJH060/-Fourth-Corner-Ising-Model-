@@ -56,7 +56,8 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr){
   }
   
   # 4. Fit Unpenalized Logistic Regression
-  logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial)
+  logistic_reg = glm(y ~ . - 1, data = data.frame(y = glm_Y, glm_X), family = binomial)
+  # logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial)
   
   # 5. Extract and reshape parameters
   est_coefs = logistic_reg$coefficients

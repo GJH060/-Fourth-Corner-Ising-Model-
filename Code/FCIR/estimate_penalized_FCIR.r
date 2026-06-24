@@ -1,6 +1,11 @@
 library(glmnet)
 
-estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", use_cv = TRUE,
+estimate_penalized_FCIR <- function(Y, 
+                                    X, 
+                                    Tr, 
+                                    alpha = 1, 
+                                    lambda = "lambda.min", 
+                                    use_cv = TRUE,
                                     cv_group_by_site = TRUE){
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column should be 1s for intercept)
@@ -74,7 +79,7 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
   # The design matrix glm_X already includes the intercept as its first column 
   # (assuming the first column of X is 1s).
   # We should not penalize the global intercept term.
-  penalty_factor = rep(1, n_params)
+  #penalty_factor = rep(1, n_params)
   #penalty_factor[1] = 0 
   
   if (use_cv) {
@@ -90,12 +95,18 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
       site_fold = sample(rep(seq_len(n_folds), length.out = N))
       fold_id = rep(site_fold, each = P)
 
+      # penalized_fit = ncvreg::cv.ncvreg(glm_X[,-1,drop=FALSE],
+      #                                   glm_Y,
+      #                                   family = "binomial",
+      #                                   trace = TRUE,
+      #                                   fold = fold_id)
       penalized_fit = cv.glmnet(glm_X[,-1,drop=FALSE],
                                 glm_Y,
                                 family = "binomial",
                                 intercept = TRUE,
-                                #standardize = FALSE,
-                                penalty.factor = penalty_factor[-length(penalty_factor)],
+                                #lambda = seq(1e-1, 1e-8, length.out = 100),
+                                #lambda.min.ratio = 1e-8,
+                                #penalty.factor = penalty_factor[-length(penalty_factor)],
                                 alpha = alpha,
                                 foldid = fold_id)
     } else {
@@ -105,8 +116,9 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
                                 glm_Y,
                                 family = "binomial",
                                 intercept = TRUE,
-                                #standardize = FALSE,
-                                penalty.factor = penalty_factor[-length(penalty_factor)],
+                                #lambda = seq(1e-1, 1e-8, length.out = 100),
+                                #lambda.min.ratio = 1e-8,
+                                #penalty.factor = penalty_factor[-length(penalty_factor)],
                                 alpha = alpha)
     }
   } else {
@@ -117,12 +129,17 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
                            glm_Y,
                            family = "binomial",
                            intercept = TRUE,
-                           #standardize = FALSE,
-                           penalty.factor = penalty_factor[-length(penalty_factor)],
+                           #penalty.factor = penalty_factor[-length(penalty_factor)],
                            alpha = alpha,
                            #thresh = 1e-12,
                            lambda = lambda)
-  
+    # penalized_fit = ncvreg::ncvreg(glm_X[,-1,drop=FALSE],
+    #                                glm_Y,
+    #                                family = "binomial",
+    #                                #penalty.factor = penalty_factor[-length(penalty_factor)],
+    #                                alpha = alpha,
+    #                                lambda = lambda)
+    
     # penalized_fit <- bigGlm(glm_X[,-1,drop=FALSE], 
     #                         glm_Y, 
     #                         family = "binomial", 
@@ -149,12 +166,15 @@ estimate_penalized_FCIR <- function(Y, X, Tr, alpha = 1, lambda = "lambda.min", 
   hat_A_mat = matrix(hat_A_vec, nrow = L, ncol = K)
   
   return(list(
+      #X = glm_X[,-1,drop=FALSE],  # Design matrix without the intercept column
+      #Y = glm_Y,                   # Response vector
     beta_0 = hat_beta_0,
     B_mat = hat_B_mat,
     alpha_0 = hat_alpha_0,
     A_mat = hat_A_mat,
     penalized_model = penalized_fit,
     cv_model = if (use_cv) penalized_fit else NULL,
+    fold_id = if (use_cv && cv_group_by_site) fold_id else NULL,
     use_cv = use_cv,
     alpha = alpha,
     lambda = lambda
