@@ -74,7 +74,15 @@ fit_FCIR_lassolambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
                                                 cv_group_by_site = TRUE,
                                                 use_cv = TRUE)
 
-
+fit_FCIR_adaptivelasso <- estimate_adaptive_lasso_FCIR(Y = Y[,,1],
+                                                       X = X,
+                                                       Tr,
+                                                       gamma = 1,
+                                                       init = "unpenalized",
+                                                       lambda = "lambda.min",
+                                                       use_cv = TRUE,
+                                                       cv_group_by_site = TRUE,
+                                                       init_lambda = "lambda.min") 
 fit_FCIR_stepAIC <- glm(y ~ . -1, 
                        data = data.frame(y = fit_FCIR_unpen$glm_model$y, 
                                          fit_FCIR_unpen$glm_model %>% model.matrix),

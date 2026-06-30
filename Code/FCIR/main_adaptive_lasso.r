@@ -1,4 +1,4 @@
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_code_dir = file.path(project_root, "Code", "FCIR")
 
 use_dense = FALSE   # FALSE -> Rdata_Sparse, TRUE -> Rdata_Dense

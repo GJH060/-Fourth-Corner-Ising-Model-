@@ -5,7 +5,8 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
                                          lambda = "lambda.min",
                                          use_cv = TRUE,
                                          cv_group_by_site = TRUE,
-                                         init_lambda = "lambda.min") {
+                                         init_lambda = "lambda.min",
+                                         custom_penalty_factor = 1) {
   init <- match.arg(init)
   N <- nrow(Y); P <- ncol(Y); L <- ncol(X); K <- ncol(Tr)
 
@@ -63,11 +64,17 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
   # Aliased/NA initial coefficients (rank deficiency) -> treat as ~0 (heavy penalty).
   beta_init[is.na(beta_init)] <- 0
 
-  # 4. Adaptive penalty on ALL non-intercept coefficients .
+  # 4. Adaptive-lasso penalty weights for all non-intercept coefficients,
+  #    optionally rescaled per-coefficient by custom_penalty_factor
+  #    (layout: beta_0[2:L] | vec(B) | alpha_0 | vec(A); default 1 = no change).
   eps <- 1e-6
   pen_factor <- 1 / (abs(beta_init) + eps)^gamma
-  pen_factor <- pen_factor / mean(pen_factor)
-  pen_factor <- pmin(pmax(pen_factor, 1e-3), 1e3)
+  if (length(custom_penalty_factor) != 1 &&
+      length(custom_penalty_factor) != length(pen_factor)) {
+    stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",
+                 length(pen_factor), length(custom_penalty_factor)))
+  }
+  pen_factor <- pen_factor * custom_penalty_factor
 
   # 5. Adaptive lasso fit (alpha = 1)
   if (use_cv) {
@@ -111,5 +118,28 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
     gamma = gamma,
     init = init,
     use_cv = use_cv
+  )
+}
+
+# Build a custom_penalty_factor vector matching the Xdes column layout used by
+# estimate_adaptive_lasso_FCIR: beta_0[2:L] | vec(B) | alpha_0 | vec(A).
+# Each block argument is either a scalar (broadcast over the block) or a vector
+# of the exact block length. beta_0 here refers to beta_0[2:L] only, because
+# beta_0[1] is the glmnet intercept and is never penalised.
+make_custom_penalty_factor <- function(L, K,
+                                       beta_0  = 1,
+                                       B       = 1,
+                                       alpha_0 = 1,
+                                       A       = 1) {
+  fill_block <- function(value, len, name) {
+    if (length(value) == 1) return(rep(value, len))
+    if (length(value) == len) return(as.numeric(value))
+    stop(sprintf("'%s' must have length 1 or %d, got %d.", name, len, length(value)))
+  }
+  c(
+    fill_block(beta_0,  L - 1,  "beta_0"),
+    fill_block(B,       L * K,  "B"),
+    fill_block(alpha_0, L,      "alpha_0"),
+    fill_block(A,       L * K,  "A")
   )
 }

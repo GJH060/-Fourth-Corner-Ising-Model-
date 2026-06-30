@@ -15,7 +15,7 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   
   # 3. Generate Main Effect Parameters
   beta_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.5, max_mag = 1.5)
-  B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.2, max_mag = 0.5), nrow = L, ncol = K)
+  B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
   
   # 4. Generate Interaction Effect Parameters (NO Adj MATRIX)
   alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.4, max_mag = 1.0)
@@ -32,8 +32,8 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   # 5. Pre-compute pairwise trait differences
   Delta = array(0, dim = c(P, P, K))
   for(j in 1:P) {
-    for(j_prime in 1:P) {
-      Delta[j, j_prime, ] = abs(Tr[j, ] - Tr[j_prime, ])
+    for(jp in 1:P) {
+      Delta[j, jp, ] = abs(Tr[j, ] - Tr[jp, ])
     }
   }
   
@@ -56,12 +56,12 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
       # Step B: Calculate site-specific interaction network (Theta)
       Theta_s = matrix(0, nrow = P, ncol = P)
       for(j in 1:(P-1)){
-        for(j_prime in (j+1):P){
-          delta_jj = Delta[j, j_prime, ]
+        for(jp in (j+1):P){
+          delta_jj = Delta[j, jp, ]
           # Calculate edge value directly for ALL pairs
           edge_val = sum(x_s * alpha_0) + sum(x_s * (A_mat %*% delta_jj))
-          Theta_s[j, j_prime] = edge_val
-          Theta_s[j_prime, j] = edge_val
+          Theta_s[j, jp] = edge_val
+          Theta_s[jp, j] = edge_val
         }
       }
       

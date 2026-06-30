@@ -1,7 +1,7 @@
 
 library(dplyr)
 
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 
 use_dense = FALSE        # FALSE -> Rdata_Sparse, TRUE -> Rdata_Dense
 init_method = "unpenalized"  # must match the init used in main_adaptive_lasso.r ("ridge" / "unpenalized")
@@ -24,7 +24,7 @@ evaluate_selection <- function(true_vector, est_matrix, tol = 1e-8) {
                          nrow = nrow(est_matrix), ncol = ncol(est_matrix))
 
   num_sim <- nrow(est_matrix)
-  tpr <- fpr <- fdr <- f1 <- rmse <- numeric(num_sim)
+  n_true_pos <- n_false_pos <- f1 <- rmse <- numeric(num_sim)
 
   for (i in 1:num_sim) {
     y_true <- true_support
@@ -35,21 +35,24 @@ evaluate_selection <- function(true_vector, est_matrix, tol = 1e-8) {
     fp <- sum(y_true == 0 & y_pred == 1)
     fn <- sum(y_true == 1 & y_pred == 0)
 
-    tpr[i] <- if ((tp + fn) > 0) tp / (tp + fn) else NA
-    fpr[i] <- if ((fp + tn) > 0) fp / (fp + tn) else NA
-    fdr[i] <- if ((tp + fp) > 0) fp / (tp + fp) else 0
+    # Absolute selection counts on the truly-zero coefficients:
+    #   n_true_pos  = truly zero AND estimated zero (correctly selected out)
+    #   n_false_pos = truly zero BUT estimated non-zero (spuriously kept)
+    n_true_pos[i]  <- tn
+    n_false_pos[i] <- fp
 
     precision <- if ((tp + fp) > 0) tp / (tp + fp) else 0
-    f1[i]     <- if ((precision + tpr[i]) > 0) 2 * precision * tpr[i] / (precision + tpr[i]) else 0
+    recall    <- if ((tp + fn) > 0) tp / (tp + fn) else 0
+    f1[i]     <- if ((precision + recall) > 0) 2 * precision * recall / (precision + recall) else 0
 
     rmse[i]   <- sqrt(mean((est_matrix[i, ] - true_vector)^2))
   }
 
   data.frame(
-    Metric = c("TPR", "FPR", "FDR", "F1", "RMSE"),
-    Mean   = c(mean(tpr, na.rm = TRUE), mean(fpr, na.rm = TRUE), mean(fdr, na.rm = TRUE),
+    Metric = c("n_true_pos", "n_false_pos", "F1", "RMSE"),
+    Mean   = c(mean(n_true_pos), mean(n_false_pos),
                mean(f1, na.rm = TRUE), mean(rmse, na.rm = TRUE)),
-    SD     = c(sd(tpr, na.rm = TRUE), sd(fpr, na.rm = TRUE), sd(fdr, na.rm = TRUE),
+    SD     = c(sd(n_true_pos), sd(n_false_pos),
                sd(f1, na.rm = TRUE), sd(rmse, na.rm = TRUE))
   )
 }
@@ -165,7 +168,7 @@ selection_wide = df %>%
   select(-SD) %>%
   tidyr::pivot_wider(id_cols = c(Matrix, N, P, n_nonzero, n_total),
                      names_from = Metric, values_from = Mean) %>%
-  select(Matrix, N, P, n_nonzero, n_total, TPR, FPR, FDR, F1, RMSE) %>%
+  select(Matrix, N, P, n_nonzero, n_total, n_true_pos, n_false_pos, F1, RMSE) %>%
   arrange(Matrix, N, P)
 selection_wide_csv = file.path(out_dir, paste0("adaptive_lasso_selection_wide_", init_method, "_", scenario_tag, ".csv"))
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)

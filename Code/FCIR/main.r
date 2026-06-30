@@ -1,7 +1,6 @@
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_code_dir = file.path(project_root, "Code", "FCIR")
 rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-source(file.path(fcir_code_dir, "generate_FCIR.r"))
 source(file.path(fcir_code_dir, "estimate_FCIR.r"))
 source(file.path(fcir_code_dir, "estimate_penalized_FCIR.r"))
 
@@ -35,23 +34,17 @@ format_lambda_label <- function(lambda_value) {
 # Record the total start time
 total_start = Sys.time()
 
-# 2. Start the nested loops
+# 2. Start the nested loops for estimation only.
+# Run main_generate_data.r first if the data files do not exist.
 for (n in Ns) {
   for (p in Ps) {
     
     data_filename = file.path(rdata_dir, paste0("FCIR_data_N", n, "_P", p, ".Rdata"))
     est_filename  = file.path(rdata_dir, paste0("FCIR_estimates_N", n, "_P", p, ".Rdata"))
     
-    if (!dir.exists(dirname(data_filename))) {
-      dir.create(dirname(data_filename), recursive = TRUE)
-    }
-    
     if (!file.exists(data_filename)) {
-      print(paste("Generating data ( N =", n, ", P =", p, ")..."))
-      generate_dense_fcir_data(N = n, P = p, L = L, K = K, B_reps = B_reps, 
-                               seed = seed, filename = data_filename)
-    } else {
-      print(paste("Data already exists for N =", n, ", P =", p, "- Skipping generation."))
+      print(paste("Data not found for N =", n, ", P =", p, "- Skipping estimation."))
+      next
     }
     
     print("Loading data...")
