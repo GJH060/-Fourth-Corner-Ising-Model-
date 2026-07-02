@@ -56,17 +56,17 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
       # Step B: Calculate site-specific interaction network (Theta)
       Theta_s = matrix(0, nrow = P, ncol = P)
       for(j in 1:(P-1)){
-        for(jp in (j+1):P){
-          delta_jj = Delta[j, jp, ]
-          # Calculate edge value directly for ALL pairs
-          edge_val = sum(x_s * alpha_0) + sum(x_s * (A_mat %*% delta_jj))
-          Theta_s[j, jp] = edge_val
-          Theta_s[jp, j] = edge_val
-        }
+          for(jp in (j+1):P){
+              delta_jj = Delta[j, jp, ]
+              # Calculate edge value directly for ALL pairs
+              edge_val = sum(x_s * alpha_0) + sum(x_s * (A_mat %*% delta_jj))
+              Theta_s[j, jp] = edge_val
+              Theta_s[jp, j] = edge_val
+          }
       }
       
       # Step C: Sample response for this specific site
-      sampled_y = IsingSampler(1, Theta_s, theta_jj_s, Beta_temp, 1000/P, 
+      sampled_y = IsingSampler(1, Theta_s, theta_jj_s, Beta_temp, 100, 
                                responses = c(0L, 1L), method = "MH")
       Y_b[s, ] = sampled_y
     }
@@ -75,7 +75,7 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   }
   
   # 7. Save output 
-  save(Y, X, Tr, beta_0, B_mat, alpha_0, A_mat, 
+  save(Y, X, Tr, beta_0, B_mat, alpha_0, A_mat, theta_jj_s,
        N, P, L, K, B_reps, seed, file = filename)
   
 }
