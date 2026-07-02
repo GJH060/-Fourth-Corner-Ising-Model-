@@ -4,19 +4,20 @@ library(glmnet)
 source("Code/FCIR/generate_without_sparsity.r")
 source("Code/FCIR/generate_FCIR.r")
 source("Code/FCIR/estimate_penalized_FCIR.r")
+source("Code/FCIR/estimate_adaptive_lasso_FCIR.r")
 source("Code/FCIR/estimate_FCIR.r")
 
 
 ##------------------------
 #' # Simulate multivariate binary data from FCIR model
 ##------------------------
-Ns <- 800
-Ps <- 60
+Ns <- 50
+Ps <- 300
 
 # Global fixed parameters
 L = 3          
 K = 2          
-seed = 2026      
+seed = NULL
 
 
 # generate_fully_dense_fcir_data(N = Ns, 
@@ -42,7 +43,6 @@ load("testexample.RData")
 fit_FCIR_unpen <- estimate_unpenalized_FCIR(Y = Y[,,1],
                                             X = X,
                                             Tr = Tr)
-
 
 fit_FCIR_ridgelambda <- estimate_penalized_FCIR(Y = Y[,,1],
                                                  X = X,
@@ -97,6 +97,15 @@ final_coefs
 ##------------------------
 #' # Fit Assess results
 ##------------------------
+beta_0; fit_FCIR_unpen$beta_0; fit_FCIR_lassolambdacv$beta_0; fit_FCIR_adaptivelasso$beta_0
+B_mat; fit_FCIR_unpen$B_mat; fit_FCIR_lassolambdacv$B_mat; fit_FCIR_adaptivelasso$B_mat
+
+alpha_0; fit_FCIR_unpen$alpha_0; fit_FCIR_lassolambdacv$alpha_0; fit_FCIR_adaptivelasso$alpha_0
+A_mat; fit_FCIR_unpen$A_mat; fit_FCIR_lassolambdacv$A_mat; fit_FCIR_adaptivelasso$A_mat
+
+
+
+
 data.frame(true = beta_0, 
            unpen = fit_FCIR_unpen$beta_0, 
            ridge = fit_FCIR_ridgelambda$beta_0,
