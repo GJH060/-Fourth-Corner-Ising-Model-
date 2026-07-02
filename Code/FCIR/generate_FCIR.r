@@ -18,7 +18,7 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
   
   # 4. Generate Interaction Effect Parameters (NO Adj MATRIX)
-  alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.4, max_mag = 1.0)
+  alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.5, max_mag = 1.5)
   A_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.5, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
   
   
