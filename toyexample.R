@@ -1,22 +1,24 @@
 rm(list = ls())
 library(tidyverse)
 library(glmnet)
+library(glm2)
 source("Code/FCIR/generate_without_sparsity.r")
 source("Code/FCIR/generate_FCIR.r")
 source("Code/FCIR/estimate_penalized_FCIR.r")
+source("Code/FCIR/estimate_adaptive_lasso_FCIR.r")
 source("Code/FCIR/estimate_FCIR.r")
 
 
 ##------------------------
 #' # Simulate multivariate binary data from FCIR model
 ##------------------------
-Ns <- 800
-Ps <- 60
+Ns <- 200
+Ps <- 200
 
 # Global fixed parameters
 L = 3          
 K = 2          
-seed = 2026      
+seed = 072026
 
 
 # generate_fully_dense_fcir_data(N = Ns, 
@@ -36,6 +38,16 @@ generate_dense_fcir_data(N = Ns,
 load("testexample.RData")
 
 
+#beta_0 + B_mat %*% t(Tr)
+apply(beta_0 + B_mat %*% t(Tr), 1, mean)
+
+Delta <- array(0, dim = c(P, P, L))
+for(j in 1:P) { for(j_prime in 1:P) {
+    Delta[j, j_prime, ] <- alpha_0 + A_mat %*% abs(Tr[j, ] - Tr[j_prime, ])
+    } }
+apply(Delta, 3, function(x) mean(x[upper.tri(x)]))
+
+
 ##------------------------
 #' # Fit various forms of the FCIR model 
 ##------------------------
@@ -43,28 +55,38 @@ fit_FCIR_unpen <- estimate_unpenalized_FCIR(Y = Y[,,1],
                                             X = X,
                                             Tr = Tr)
 
+beta_0; fit_FCIR_unpen$beta_0
+B_mat; fit_FCIR_unpen$B_mat
+alpha_0; fit_FCIR_unpen$alpha_0
+A_mat; fit_FCIR_unpen$A_mat
 
-fit_FCIR_ridgelambda <- estimate_penalized_FCIR(Y = Y[,,1],
-                                                 X = X,
-                                                 Tr = Tr,
-                                                 alpha = 1e-12,
-                                                 lambda = 0.5 / (Ns * Ps),
-                                                 use_cv = FALSE)
 
-fit_FCIR_lassolambda <- estimate_penalized_FCIR(Y = Y[,,1],
-                                                X = X,
-                                                Tr = Tr,
-                                                alpha = 1,
-                                                lambda = 0.5 / (Ns * Ps),
-                                                use_cv = FALSE)
+MM <- fit_FCIR_unpen$glm_model %>% model.matrix
+summary(abs(MM[,1:(L + L*K)] %*% c(beta_0, B_mat %>% as.vector)))
+summary(abs(MM[,(L + L*K + 1):(2*L + 2*L*K)] %*% c(alpha_0, A_mat %>% as.vector)))
 
-fit_FCIR_ridgelambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
-                                                  X = X,
-                                                  Tr = Tr,
-                                                  alpha = 0,
-                                                  lambda = "lambda.min",
-                                                  cv_group_by_site = TRUE,
-                                                  use_cv = TRUE)
+
+# fit_FCIR_ridgelambda <- estimate_penalized_FCIR(Y = Y[,,1],
+#                                                  X = X,
+#                                                  Tr = Tr,
+#                                                  alpha = 1e-12,
+#                                                  lambda = 0.5 / (Ns * Ps),
+#                                                  use_cv = FALSE)
+# 
+# fit_FCIR_lassolambda <- estimate_penalized_FCIR(Y = Y[,,1],
+#                                                 X = X,
+#                                                 Tr = Tr,
+#                                                 alpha = 1,
+#                                                 lambda = 0.5 / (Ns * Ps),
+#                                                 use_cv = FALSE)
+# 
+# fit_FCIR_ridgelambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
+#                                                   X = X,
+#                                                   Tr = Tr,
+#                                                   alpha = 0,
+#                                                   lambda = "lambda.min",
+#                                                   cv_group_by_site = TRUE,
+#                                                   use_cv = TRUE)
 
 fit_FCIR_lassolambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
                                                 X = X,
@@ -97,6 +119,15 @@ final_coefs
 ##------------------------
 #' # Fit Assess results
 ##------------------------
+beta_0; fit_FCIR_unpen$beta_0; fit_FCIR_lassolambdacv$beta_0; fit_FCIR_adaptivelasso$beta_0
+B_mat; fit_FCIR_unpen$B_mat; fit_FCIR_lassolambdacv$B_mat; fit_FCIR_adaptivelasso$B_mat
+
+alpha_0; fit_FCIR_unpen$alpha_0; fit_FCIR_lassolambdacv$alpha_0; fit_FCIR_adaptivelasso$alpha_0
+A_mat; fit_FCIR_unpen$A_mat; fit_FCIR_lassolambdacv$A_mat; fit_FCIR_adaptivelasso$A_mat
+
+
+
+
 data.frame(true = beta_0, 
            unpen = fit_FCIR_unpen$beta_0, 
            ridge = fit_FCIR_ridgelambda$beta_0,
