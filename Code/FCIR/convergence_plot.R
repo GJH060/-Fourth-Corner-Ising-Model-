@@ -1,8 +1,9 @@
+
 library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-/"
 rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
 plot_dir = file.path(project_root, "Simulation_Results", "plots")
 
@@ -84,6 +85,14 @@ generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
     }
   }
   
+  # Guard against the case where no estimate files were found (e.g. a method
+  # whose results have not been generated yet). Without this, bind_rows() on an
+  # empty list yields a 0-column data frame and the code below warns about
+  # "Unknown or uninitialised column: N/P/Parameter".
+  if (length(df_list) == 0) {
+    warning(paste("No data loaded for method:", method, "- skipping plots."))
+    return(invisible(NULL))
+  }
  
   df_all = bind_rows(df_list)
   

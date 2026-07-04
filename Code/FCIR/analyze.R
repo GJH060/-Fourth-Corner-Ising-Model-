@@ -2,7 +2,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-/"
 rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
 plot_dir = file.path(project_root, "Simulation_Results", "plots")
 if (!dir.exists(plot_dir)) {
@@ -20,7 +20,7 @@ format_lambda_label <- function(lambda_value) {
 ridge_methods = paste0("ridge_lambda", sapply(ridge_lambdas, format_lambda_label))
 # Unpenalized all-parameter plots live in boxplots_allparam_unpenalized_sparse;
 # this script only produces the fixed-lambda ridge all-parameter plots.
-methods = ridge_methods
+methods = "unpenalized"
 
 for (method in methods) {
   for (n in Ns) {

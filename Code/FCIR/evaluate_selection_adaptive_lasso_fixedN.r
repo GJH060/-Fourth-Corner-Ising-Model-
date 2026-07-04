@@ -4,15 +4,16 @@ library(dplyr)
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 
 use_dense = FALSE        # FALSE -> Rdata_Sparse, TRUE -> Rdata_Dense
-init_method = "unpenalized"  # must match the init used in main_adaptive_lasso.r ("ridge" / "unpenalized")
+init_method = "unpenalized"  # must match the init used in main_adaptive_lasso_fixedN.r ("ridge" / "unpenalized")
 rdata_dir = file.path(project_root, "Simulation_Results",
                       if (use_dense) "Rdata_Dense" else "Rdata_Sparse")
 infix = if (use_dense) "_Dense" else ""
 out_dir = file.path(project_root, "Simulation_Results", "tables")
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
-Ns = c(50, 100, 200, 400, 800)
-Ps = c(30, 60)
+# Fixed sample size, sweep the number of species P.
+N_fixed = 200
+Ps = c(30, 60, 120, 240)
 
 tol = 1e-8   # |coef| <= tol is treated as a (selected-out) zero
 
@@ -117,36 +118,34 @@ format_ascii_table <- function(x, digits = 3) {
 
 results = list()
 
-for (n in Ns) {
-  for (p in Ps) {
-    f = file.path(rdata_dir, paste0("FCIR_estimates_adaptive_lasso_", init_method, infix, "_N", n, "_P", p, ".Rdata"))
-    if (!file.exists(f)) {
-      warning(paste("Missing:", f, "- run main_adaptive_lasso.r first. Skipping."))
-      next
-    }
-    e = new.env(); load(f, envir = e)
-
-    for (mat in c("B", "A")) {
-      true_vec = as.vector(if (mat == "B") e$B_mat else e$A_mat)
-      est_mat  = flatten_estimates(if (mat == "B") e$est_B_mat else e$est_A_mat)
-      summ = evaluate_selection(true_vec, est_mat, tol = tol)
-      summ$N = n; summ$P = p; summ$Matrix = mat
-      summ$n_nonzero = sum(abs(true_vec) > tol)
-      summ$n_total   = length(true_vec)
-      results[[paste(mat, n, p, sep = "_")]] = summ
-    }
-
-    for (block in c("beta_0", "alpha_0")) {
-      true_vec = as.vector(if (block == "beta_0") e$beta_0 else e$alpha_0)
-      est_mat = if (block == "beta_0") e$est_beta_0 else e$est_alpha_0
-      summ = evaluate_dense_block(true_vec, est_mat, tol = tol)
-      summ$N = n; summ$P = p; summ$Matrix = block
-      summ$n_nonzero = sum(abs(true_vec) > tol)
-      summ$n_total = length(true_vec)
-      results[[paste(block, n, p, sep = "_")]] = summ
-    }
-    message("Evaluated adaptive lasso metrics: N=", n, ", P=", p)
+for (p in Ps) {
+  f = file.path(rdata_dir, paste0("FCIR_estimates_adaptive_lasso_", init_method, infix, "_N", N_fixed, "_P", p, ".Rdata"))
+  if (!file.exists(f)) {
+    warning(paste("Missing:", f, "- run main_adaptive_lasso_fixedN.r first. Skipping."))
+    next
   }
+  e = new.env(); load(f, envir = e)
+
+  for (mat in c("B", "A")) {
+    true_vec = as.vector(if (mat == "B") e$B_mat else e$A_mat)
+    est_mat  = flatten_estimates(if (mat == "B") e$est_B_mat else e$est_A_mat)
+    summ = evaluate_selection(true_vec, est_mat, tol = tol)
+    summ$N = N_fixed; summ$P = p; summ$Matrix = mat
+    summ$n_nonzero = sum(abs(true_vec) > tol)
+    summ$n_total   = length(true_vec)
+    results[[paste(mat, N_fixed, p, sep = "_")]] = summ
+  }
+
+  for (block in c("beta_0", "alpha_0")) {
+    true_vec = as.vector(if (block == "beta_0") e$beta_0 else e$alpha_0)
+    est_mat = if (block == "beta_0") e$est_beta_0 else e$est_alpha_0
+    summ = evaluate_dense_block(true_vec, est_mat, tol = tol)
+    summ$N = N_fixed; summ$P = p; summ$Matrix = block
+    summ$n_nonzero = sum(abs(true_vec) > tol)
+    summ$n_total = length(true_vec)
+    results[[paste(block, N_fixed, p, sep = "_")]] = summ
+  }
+  message("Evaluated adaptive lasso metrics: N=", N_fixed, ", P=", p)
 }
 
 if (length(results) == 0) stop("No adaptive lasso estimate files found.")
@@ -155,7 +154,7 @@ df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
   arrange(Matrix, N, P, Metric)
 
-scenario_tag = if (use_dense) "Dense" else "Sparse"
+scenario_tag = paste0(if (use_dense) "Dense" else "Sparse", "_fixedN", N_fixed)
 out_csv = file.path(out_dir, paste0("adaptive_lasso_selection_", init_method, "_", scenario_tag, ".csv"))
 write.csv(df, out_csv, row.names = FALSE)
 message("Saved selection summary table: ", out_csv)
@@ -196,4 +195,3 @@ message("Saved bordered wide selection table: ", selection_wide_txt)
 message("Saved dense diagnostic summary table: ", dense_wide_csv)
 message("Saved bordered dense diagnostic table: ", dense_wide_txt)
 message("Finished adaptive lasso selection evaluation.")
-

@@ -2,7 +2,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Dense")
 plot_dir = file.path(project_root, "Simulation_Results", "plots")
 
