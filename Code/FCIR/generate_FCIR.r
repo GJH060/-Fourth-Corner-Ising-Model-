@@ -14,12 +14,18 @@ generate_dense_fcir_data <- function(N, P, L, K, B_reps, seed, filename){
   }
   
   # 3. Generate Main Effect Parameters
-  beta_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.5, max_mag = 1.5)
-  B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
+  #beta_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.5, max_mag = 1.5)
+  #B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)
+  beta_0 <- runif(L, -1, 1)
+  B_mat <- matrix(runif(L * K, -1, 1), nrow = L, ncol = K)
+  B_mat[order(abs(B_mat))[1:3]] <- 0
   
   # 4. Generate Interaction Effect Parameters (NO Adj MATRIX)
-  alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.4, max_mag = 1.0)*0.25
-  A_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.5, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)*0.25
+  #alpha_0 = generate_sparse_params(L, prob_zero = 0, min_mag = 0.4, max_mag = 1.0)*0.4
+  #A_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.5, min_mag = 0.3, max_mag = 0.8), nrow = L, ncol = K)*0.4
+  alpha_0 <- runif(L, -1, 1)*0.4
+  A_mat <- matrix(runif(L * K, -1, 1), nrow = L, ncol = K)*0.4
+  A_mat[order(abs(A_mat))[1:3]] <- 0
   
   
   # 1. Initialize Matrices
