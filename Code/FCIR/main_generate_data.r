@@ -22,7 +22,7 @@ total_start = Sys.time()
 # 2. Generate data only. Estimation is handled by main.r.
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(rdata_dir, paste0("FCIR_data_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(rdata_dir, paste0("FCIR_data_weaken alpha0 and Amat_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
       print(paste("Generating data ( N =", n, ", P =", p, ")..."))
