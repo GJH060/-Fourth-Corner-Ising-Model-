@@ -3,6 +3,7 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr,
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column should be 1s for intercept)
   # Tr: P x K species traits matrix
+  # standardize: whether to standardize the design matrix (excluding intercept) before fitting the model
   
   N = nrow(Y)
   P = ncol(Y)
@@ -57,6 +58,7 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr,
   }
   
   # 4. Fit Unpenalized Logistic Regression
+  getsds <- apply(glm_X[,-1], 2, sd)
   if(standardize){
     glm_X[,-1] <- scale(glm_X[,-1])
     }
@@ -83,6 +85,7 @@ estimate_unpenalized_FCIR <- function(Y, X, Tr,
     alpha_0 = hat_alpha_0,
     A_mat = hat_A_mat,
     standardize = standardize,
+    getsds = getsds,
     glm_model = logistic_reg # Return the original model to allow checking p-values or summary
   ))
 }
