@@ -1,15 +1,14 @@
 library(glmnet)
 estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
                                          gamma = 1,
+                                         init = "unpenalized",
                                          lambda = "lambda.min",
                                          use_cv = TRUE,
                                          cv_group_by_site = TRUE,
                                          custom_penalty_factor = 1) {
-    if (length(custom_penalty_factor) != 1 &&
-        length(custom_penalty_factor) != length(pen_factor)) {
-        stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",
-                     length(pen_factor), length(custom_penalty_factor)))
-    }
+    if (init != "unpenalized") {
+        stop("Only init = 'unpenalized' is currently supported.")
+        }
     
     if(!use_cv && !is.numeric(lambda)) {
         stop("When use_cv = FALSE, lambda must be a numeric value.")
@@ -39,6 +38,7 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
                                           Tr = Tr,
                                           standardize = TRUE)
     beta_init <- as.numeric(coef(init_fit$glm_model))[-1]
+    beta_init[!is.finite(beta_init)] <- 0
     Xdes <- model.matrix(init_fit$glm_model)[, -1, drop = FALSE] 
     glm_Y <- as.vector(init_fit$glm_model$y)
     
@@ -47,6 +47,11 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
     # (layout: beta_0[2:L] | vec(B) | alpha_0 | vec(A); default 1 = no change).
     eps <- 1e-6
     pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+    if (length(custom_penalty_factor) != 1 &&
+        length(custom_penalty_factor) != length(pen_factor)) {
+        stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",
+                     length(pen_factor), length(custom_penalty_factor)))
+    }
     pen_factor <- pen_factor * custom_penalty_factor
     
     
@@ -77,7 +82,7 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
     # Extract coefficients. coef() returns [intercept, Xdes coefs]; with the ones-column dropped, that intercept IS beta_0[1], so the full vector maps directly onto (beta_0, vec(B), alpha_0, vec(A)).
     est_coefs <- as.numeric(coef(ad_fit, s = lambda))
     final_coefs <- est_coefs
-    final_coefs[-1] <- est_coefs[-1] / init_fit$gets # Rescale slopes by the unpenalized SDs of the Xdes columns   
+    final_coefs[-1] <- est_coefs[-1] / init_fit$getsds # Rescale slopes by the unpenalized SDs of the Xdes columns   
     getunstandardizedX <-  estimate_unpenalized_FCIR(Y = Y,
                                                      X = X,
                                                      Tr = Tr,

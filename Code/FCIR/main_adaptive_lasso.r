@@ -25,7 +25,7 @@ Ps = c(30, 60)
 L = 3
 K = 2
 B_reps = 1000
-seed = 42
+seed = 2026
 
 # Adaptive lasso settings
 gamma_value = 1

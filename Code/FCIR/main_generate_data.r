@@ -11,7 +11,7 @@ Ps = c(30, 60)
 L = 3
 K = 2
 B_reps = 1000
-seed = 42
+seed = 2026
 
 if (!dir.exists(rdata_dir)) {
   dir.create(rdata_dir, recursive = TRUE)
@@ -22,7 +22,7 @@ total_start = Sys.time()
 # 2. Generate data only. Estimation is handled by main.r.
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(rdata_dir, paste0("FCIR_data_weaken alpha0 and Amat_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(rdata_dir, paste0("FCIR_data_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
       print(paste("Generating data ( N =", n, ", P =", p, ")..."))
