@@ -1,7 +1,7 @@
 rm(list = ls())
 library(tidyverse)
 library(glmnet)
-library(glm2)
+#library(glm2)
 source("Code/FCIR/generate_without_sparsity.r")
 source("Code/FCIR/generate_FCIR.r")
 source("Code/FCIR/estimate_penalized_FCIR.r")
@@ -12,8 +12,8 @@ source("Code/FCIR/estimate_FCIR.r")
 ##------------------------
 #' # Simulate multivariate binary data from FCIR model
 ##------------------------
-Ns <- 800
-Ps <- 30
+Ns <- 400
+Ps <- 60
 
 # Global fixed parameters
 L = 3          
@@ -21,13 +21,6 @@ K = 2
 seed = 2026
 
 
-# generate_fully_dense_fcir_data(N = Ns, 
-#                                P = Ps, 
-#                                L = L, 
-#                                K = K, 
-#                                B_reps = 1, 
-#                                seed = seed, 
-#                                filename = "testexample.RData")
 generate_dense_fcir_data(N = Ns, 
                          P = Ps, 
                          L = L, 
@@ -51,90 +44,58 @@ apply(Delta, 3, function(x) mean(x[upper.tri(x)]))
 ##------------------------
 #' # Fit various forms of the FCIR model 
 ##------------------------
+fit_FCIR_unpen_nostan <- estimate_unpenalized_FCIR(Y = Y[,,1],
+                                                   X = X,
+                                                   Tr = Tr,
+                                                   standardize = FALSE)
+
 fit_FCIR_unpen <- estimate_unpenalized_FCIR(Y = Y[,,1],
                                             X = X,
-                                            Tr = Tr)
+                                            Tr = Tr,
+                                            standardize = TRUE)
+#' The unpenalized fit is on the standardized scale, so we need to rescale the coefficients back to the original scale for comparison with the true parameters. The intercept is adjusted to account for the rescaling of the other coefficients.
+fit_FCIR_unpen$orig_scale_coefficients <- fit_FCIR_unpen$glm_model$coefficients
+fit_FCIR_unpen$orig_scale_coefficients[-1] <- fit_FCIR_unpen$glm_model$coefficients[-1] / fit_FCIR_unpen$getsds  # Rescale by the unpenalized SDs of the Xdes columns
+fit_FCIR_unpen$orig_scale_coefficients[1] <- fit_FCIR_unpen$glm_model$coefficients[1] - sum(fit_FCIR_unpen$glm_model$coefficients[-1] * colMeans(model.matrix(fit_FCIR_unpen_nostan$glm_model)[,-1]) / fit_FCIR_unpen$getsds)  # Adjust intercept for rescaling
+fit_FCIR_unpen$orig_scale_beta0 <- fit_FCIR_unpen$orig_scale_coefficients[1:L]
+fit_FCIR_unpen$orig_scale_B_mat <- matrix(fit_FCIR_unpen$orig_scale_coefficients[(L + 1):(L + L*K)], nrow = L, ncol = K)
+fit_FCIR_unpen$orig_scale_alpha0 <- fit_FCIR_unpen$orig_scale_coefficients[(L + L*K + 1):(2*L + L*K)]
+fit_FCIR_unpen$orig_scale_A_mat <- matrix(fit_FCIR_unpen$orig_scale_coefficients[(2*L + L*K + 1):(2*L + 2*L*K)], nrow = L, ncol = K)
 
-beta_0; fit_FCIR_unpen$beta_0
-B_mat; fit_FCIR_unpen$B_mat
-alpha_0; fit_FCIR_unpen$alpha_0
-A_mat; fit_FCIR_unpen$A_mat
 
+beta_0; fit_FCIR_unpen_nostan$beta_0; fit_FCIR_unpen$orig_scale_beta0
+B_mat; fit_FCIR_unpen_nostan$B_mat; fit_FCIR_unpen$orig_scale_B_mat
 
-MM <- fit_FCIR_unpen$glm_model %>% model.matrix
-summary(abs(MM[,1:(L + L*K)] %*% c(beta_0, B_mat %>% as.vector)))
-summary(abs(MM[,(L + L*K + 1):(2*L + 2*L*K)] %*% c(alpha_0, A_mat %>% as.vector)))
+alpha_0; fit_FCIR_unpen_nostan$alpha_0; fit_FCIR_unpen$orig_scale_alpha0
+A_mat; fit_FCIR_unpen_nostan$A_mat; fit_FCIR_unpen$orig_scale_A_mat
+#' Confirms our reversingf of the standardization is correct, as the unpenalized fit on the standardized scale matches the unpenalized fit on the original scale. 
 
-
-# fit_FCIR_ridgelambda <- estimate_penalized_FCIR(Y = Y[,,1],
-#                                                  X = X,
-#                                                  Tr = Tr,
-#                                                  alpha = 1e-12,
-#                                                  lambda = 0.5 / (Ns * Ps),
-#                                                  use_cv = FALSE)
-# 
-# fit_FCIR_lassolambda <- estimate_penalized_FCIR(Y = Y[,,1],
-#                                                 X = X,
-#                                                 Tr = Tr,
-#                                                 alpha = 1,
-#                                                 lambda = 0.5 / (Ns * Ps),
-#                                                 use_cv = FALSE)
-# 
-# fit_FCIR_ridgelambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
-#                                                   X = X,
-#                                                   Tr = Tr,
-#                                                   alpha = 0,
-#                                                   lambda = "lambda.min",
-#                                                   cv_group_by_site = TRUE,
-#                                                   use_cv = TRUE)
 
 fit_FCIR_lassolambdacv <- estimate_penalized_FCIR(Y = Y[,,1],
-                                                X = X,
-                                                Tr = Tr,
-                                                alpha = 1,
-                                                lambda = "lambda.min",
-                                                cv_group_by_site = TRUE,
-                                                use_cv = TRUE)
+                                                  X = X,
+                                                  Tr = Tr,
+                                                  alpha = 1,
+                                                  lambda = "lambda.min",
+                                                  cv_group_by_site = TRUE,
+                                                  use_cv = TRUE)
 
 fit_FCIR_adaptivelasso <- estimate_adaptive_lasso_FCIR(Y = Y[,,1],
                                                        X = X,
                                                        Tr,
-                                                       gamma = 1, #rep(c(2,1), c(L-1 + L*K, L + L*K)),
-                                                       init = "unpenalized",
+                                                       gamma = 1, 
                                                        lambda = "lambda.min",
                                                        use_cv = TRUE,
-                                                       cv_group_by_site = TRUE,
-                                                       init_lambda = "lambda.min") 
-
-fit_FCIR_adaptivelasso2 <- estimate_adaptive_lasso_FCIR(Y = Y[,,1],
-                                                       X = X,
-                                                       Tr,
-                                                       gamma = rep(c(2,1), c(L-1 + L*K, L + L*K)),
-                                                       init = "unpenalized",
-                                                       lambda = "lambda.min",
-                                                       use_cv = TRUE,
-                                                       cv_group_by_site = TRUE,
-                                                       init_lambda = "lambda.min") 
-
-# fit_FCIR_stepAIC <- glm(y ~ . -1, 
-#                        data = data.frame(y = fit_FCIR_unpen$glm_model$y, 
-#                                          fit_FCIR_unpen$glm_model %>% model.matrix),
-#                        family = binomial)
-# fit_FCIR_stepAIC <- MASS::stepAIC(fit_FCIR_stepAIC, direction = "backward", trace = TRUE) 
-# all_names <- names(coef(fit_FCIR_unpen$glm_model))
-# final_coefs <- setNames(rep(0, length(all_names)), all_names)
-# final_coefs[names(coef(fit_FCIR_stepAIC))] <- coef(fit_FCIR_stepAIC)
-# final_coefs
+                                                       cv_group_by_site = TRUE) 
 
 
 ##------------------------
 #' # Fit Assess results
 ##------------------------
-beta_0; fit_FCIR_unpen$beta_0; fit_FCIR_lassolambdacv$beta_0; fit_FCIR_adaptivelasso$beta_0; fit_FCIR_adaptivelasso2$beta_0
-B_mat; fit_FCIR_unpen$B_mat; fit_FCIR_lassolambdacv$B_mat; fit_FCIR_adaptivelasso$B_mat; fit_FCIR_adaptivelasso2$B_mat
+beta_0; fit_FCIR_unpen$orig_scale_beta0; fit_FCIR_lassolambdacv$beta_0; fit_FCIR_adaptivelasso$beta_0
+B_mat; fit_FCIR_unpen$orig_scale_B; fit_FCIR_lassolambdacv$B_mat; fit_FCIR_adaptivelasso$B_mat
 
-alpha_0; fit_FCIR_unpen$alpha_0; fit_FCIR_lassolambdacv$alpha_0; fit_FCIR_adaptivelasso$alpha_0; fit_FCIR_adaptivelasso2$alpha_0
-A_mat; fit_FCIR_unpen$A_mat; fit_FCIR_lassolambdacv$A_mat; fit_FCIR_adaptivelasso$A_mat; fit_FCIR_adaptivelasso2$A_mat
+alpha_0; fit_FCIR_unpen$orig_scale_alpha_0; fit_FCIR_lassolambdacv$alpha_0; fit_FCIR_adaptivelasso$alpha_0
+A_mat; fit_FCIR_unpen$orig_scale_A; fit_FCIR_lassolambdacv$A_mat; fit_FCIR_adaptivelasso$A_mat
 
 
 
@@ -165,21 +126,3 @@ data.frame(true = A_mat %>% as.vector,
            lassolambdacv = fit_FCIR_lassolambdacv$A_mat %>% as.vector)
 
 
-fit_FCIR_lassolambdacv$cv_model %>% plot
-fit_FCIR_ridgelambdacv$cv_model %>% plot
-fit_FCIR_lassolambdacv$fold_id
-
- 
-# gof <- -2*colSums(dbinom(fit_FCIR_unpen$glm_model$y, 
-#        size = 1,
-#        prob = plogis(as.matrix(model.matrix(fit_FCIR_unpen$glm_model) %*% coef(fit_FCIR_lassolambdacv$penalized_model$glmnet.fit))),
-#        log = TRUE))
-# 
-# 
-# 
-# data.frame(lambda = fit_FCIR_lassolambdacv$cv_model$lambda,
-#            gof = gof,
-#            df = fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df,
-#            AIC = gof + 2*fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df,
-#            BIC = gof + log(Ns*Ps)*fit_FCIR_lassolambdacv$penalized_model$glmnet.fit$df) 
-# 
