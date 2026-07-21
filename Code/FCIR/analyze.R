@@ -3,8 +3,8 @@ library(tidyr)
 library(dplyr)
 
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-/"
-rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-plot_dir = file.path(project_root, "Simulation_Results", "plots")
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+plot_dir = file.path(project_root, "Simulation_Results", "FCIR", "plots")
 if (!dir.exists(plot_dir)) {
   dir.create(plot_dir, recursive = TRUE)
 }
@@ -122,4 +122,4 @@ for (method in methods) {
 }
 }
 
-print("Finish！")
+print("Finished")

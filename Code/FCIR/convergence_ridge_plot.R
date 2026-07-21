@@ -2,9 +2,9 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 
-project_root = "E:/RStudio/thesis"
-rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-output_dir = file.path(project_root, "Simulation_Results", "plots", "boxplots_perparam_ridge_fixedlambda_sparse")
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+output_dir = file.path(project_root, "Simulation_Results", "FCIR", "plots", "boxplots_perparam_ridge_fixedlambda_sparse")
 
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)

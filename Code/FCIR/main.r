@@ -1,6 +1,6 @@
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_code_dir = file.path(project_root, "Code", "FCIR")
-rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
 source(file.path(fcir_code_dir, "estimate_FCIR.r"))
 source(file.path(fcir_code_dir, "estimate_penalized_FCIR.r"))
 

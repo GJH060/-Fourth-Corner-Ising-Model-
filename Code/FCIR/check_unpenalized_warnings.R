@@ -4,7 +4,7 @@
 # any existing estimate Rdata files.
 
 # ---------------- User settings ----------------
-project_root <- "E:/RStudio/thesis"
+project_root <- "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 source(file.path(project_root, "Code", "FCIR", "estimate_FCIR.r"))
 estimate_fun <- get("estimate_unpenalized_FCIR")
 
@@ -19,15 +19,15 @@ Ps <- c(30, 60)
 # Use NULL to check all Monte Carlo repetitions in each data file.
 max_reps <- 100
 
-output_dir <- file.path(project_root, "Simulation_Results", "warnings")
+output_dir <- file.path(project_root, "Simulation_Results", "FCIR", "warnings")
 if (!dir.exists(output_dir)) {
   dir.create(output_dir, recursive = TRUE)
 }
 
 data_dir <- if (use_dense) {
-  file.path(project_root, "Simulation_Results", "Rdata_Dense")
+  file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Dense")
 } else {
-  file.path(project_root, "Simulation_Results", "Rdata_Sparse")
+  file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
 }
 
 scenario_tag <- if (use_dense) "Dense" else "Sparse"

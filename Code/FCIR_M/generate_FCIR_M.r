@@ -11,23 +11,19 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   X[,1] = 1 
   Tr = matrix(runif(P * K, min = -1, max = 1), nrow = P, ncol = K)
   
-  generate_sparse_params <- function(n_elements, prob_zero, min_mag, max_mag) {
-    is_zero = rbinom(n_elements, 1, prob_zero)
-    mags = runif(n_elements, min_mag, max_mag)
-    signs = sample(c(-1, 1), n_elements, replace = TRUE)
-    return((1 - is_zero) * signs * mags)
-  }
-  
-  # Main Effect Parameters (Retained from full model)
-  beta_0 = generate_sparse_params(L, prob_zero = 0.3, min_mag = 0.5, max_mag = 1.5)
-  B_mat = matrix(generate_sparse_params(L * K, prob_zero = 0.3, min_mag = 0.2, max_mag = 0.5), nrow = L, ncol = K)
+  # Main Effect Parameters (same scale as FCIR / FCIR_I; only B_mat is sparse).
+  beta_0 = runif(L, -1, 1)
+  B_mat = matrix(runif(L * K, -1, 1), nrow = L, ncol = K)
+  B_mat[order(abs(B_mat))[1:3]] = 0
   
   # --- MODIFICATION 1: Static Residual Interaction Network ---
   # Theta_int: P x P symmetric matrix independent of environment and traits.
   Theta_int = matrix(0, nrow = P, ncol = P)
   n_edges = P * (P - 1) / 2
-  # Generate sparse static edge potentials 
-  upper_tri_vals = generate_sparse_params(n_edges, prob_zero = 0.6, min_mag = 0.4, max_mag = 1.0)
+  # Same sparsity rule as B_mat: runif(-1, 1) potentials, then zero the
+  # smallest-magnitude half of the edges.
+  upper_tri_vals = runif(n_edges, -1, 1)
+  upper_tri_vals[order(abs(upper_tri_vals))[1:floor(n_edges / 2)]] = 0
   Theta_int[upper.tri(Theta_int)] = upper_tri_vals
   Theta_int[lower.tri(Theta_int)] = t(Theta_int)[lower.tri(Theta_int)]
   

@@ -14,19 +14,19 @@ library(ggplot2)
 library(dplyr)
 
 # --- paths (edit if your project root differs) ---
-project_root <- "E:/RStudio/thesis"
+project_root <- "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 # Sparse (matches generate_FCIR.r / main.r outputs)
-data_dir <- file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-est_dir <- file.path(project_root, "Simulation_Results", "Rdata_Sparse")
+data_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+est_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
 # Dense workflow: set use_dense <- TRUE and point data_dir / est_dir to Rdata_Dense.
 use_dense <- FALSE
 if (use_dense) {
-  data_dir <- file.path(project_root, "Simulation_Results", "Rdata_Dense")
-  est_dir <- file.path(project_root, "Simulation_Results", "Rdata_Dense")
+  data_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Dense")
+  est_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Dense")
 }
 scenario_tag <- if (use_dense) "Dense" else "Sparse"
 
-plot_dir <- file.path(project_root, "Simulation_Results", "plots")
+plot_dir <- file.path(project_root, "Simulation_Results", "FCIR", "plots")
 if (!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
 
 Ns <- c(50, 100, 200, 400, 800)

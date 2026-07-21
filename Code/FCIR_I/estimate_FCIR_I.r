@@ -1,4 +1,6 @@
-estimate_unpenalized_FCIR_I <- function(Y, X, Tr){
+estimate_unpenalized_FCIR_I <- function(Y, X, Tr,
+                                        standardize = FALSE,
+                                        returnX_only = FALSE){
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column is 1s for intercept)
   # Tr: P x K species traits matrix
@@ -59,6 +61,15 @@ estimate_unpenalized_FCIR_I <- function(Y, X, Tr){
     }
   }
   
+  getsds <- apply(glm_X, 2, sd)
+  if (standardize) {
+    glm_X <- scale(glm_X)
+  }
+
+  if (returnX_only) {
+    return(glm_X)
+  }
+
   # 3. Fit Unpenalized Logistic Regression
   logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial, control = glm.control(maxit = 100))
   est_coefs = logistic_reg$coefficients
@@ -78,6 +89,8 @@ estimate_unpenalized_FCIR_I <- function(Y, X, Tr){
     Beta_mat = hat_Beta_mat,
     alpha_0 = hat_alpha_0,
     A_mat = hat_A_mat,
+    standardize = standardize,
+    getsds = getsds,
     glm_model = logistic_reg
   ))
 }

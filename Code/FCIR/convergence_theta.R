@@ -2,8 +2,8 @@
 library(ggplot2)
 library(dplyr)
 
-project_root <- "E:/RStudio/thesis"
-plot_dir <- file.path(project_root, "Simulation_Results", "plots", "theta_convergence")
+project_root <- "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+plot_dir <- file.path(project_root, "Simulation_Results", "FCIR", "plots", "theta_convergence")
 if (!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
 
 Ns <- c(50, 100, 200, 400, 800)
@@ -49,7 +49,7 @@ scenarios <- c("Dense", "Sparse")
 
 for (scenario in scenarios) {
   infix   <- if (scenario == "Dense") "_Dense" else ""
-  data_dir <- file.path(project_root, "Simulation_Results",
+  data_dir <- file.path(project_root, "Simulation_Results", "FCIR",
                         if (scenario == "Dense") "Rdata_Dense" else "Rdata_Sparse")
 
   rows_main <- list()

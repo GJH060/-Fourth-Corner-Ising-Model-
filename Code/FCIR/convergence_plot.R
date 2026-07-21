@@ -4,8 +4,8 @@ library(tidyr)
 library(dplyr)
 
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-/"
-rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Sparse")
-plot_dir = file.path(project_root, "Simulation_Results", "plots")
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+plot_dir = file.path(project_root, "Simulation_Results", "FCIR", "plots")
 
 generate_parameter_convergence_plots <- function(Ns = c(50, 100, 200, 400, 800),
                                                  Ps = c(30, 60),

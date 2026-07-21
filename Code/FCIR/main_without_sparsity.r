@@ -1,6 +1,6 @@
-project_root = "E:/RStudio/thesis"
+project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_code_dir = file.path(project_root, "Code", "FCIR")
-rdata_dir = file.path(project_root, "Simulation_Results", "Rdata_Dense")
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Dense")
 
 source(file.path(fcir_code_dir, "generate_without_sparsity.r"))
 source(file.path(fcir_code_dir, "estimate_FCIR.r"))

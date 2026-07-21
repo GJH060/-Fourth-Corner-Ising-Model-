@@ -6,8 +6,9 @@ library(tidyr)
 Ns <- c(50, 100, 200, 400, 800)
 Ps <- c(30, 60)
 
-data_dir <- "E:/RStudio/thesis/Simulation_Results/Rdata_Sparse/"
-out_dir <- "E:/RStudio/thesis/Simulation_Results/plots/sparsity/"
+project_root <- "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+data_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+out_dir <- file.path(project_root, "Simulation_Results", "FCIR", "plots", "sparsity")
 
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
@@ -16,7 +17,7 @@ site_results_list <- list()
 
 for (n in Ns) {
   for (p in Ps) {
-    file_path <- paste0(data_dir, "FCIR_data_N", n, "_P", p, ".Rdata")
+    file_path <- file.path(data_dir, paste0("FCIR_data_N", n, "_P", p, ".Rdata"))
     if (file.exists(file_path)) {
       cat("Processing N =", n, ", P =", p, "\n")
       # Load into a new environment to prevent variable conflicts
@@ -74,7 +75,7 @@ p1 <- ggplot(all_results, aes(x = N, y = Sparsity, fill = P)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   scale_y_continuous(limits = c(0, 1))
 
-plot1_path <- paste0(out_dir, "Sparsity_Species_Boxplot_Sparse.png")
+plot1_path <- file.path(out_dir, "Sparsity_Species_Boxplot_Sparse.png")
 ggsave(plot1_path, p1, width = 8, height = 6)
 cat("Saved Plot 1:", plot1_path, "\n")
 
@@ -94,7 +95,7 @@ p2 <- ggplot(overall_df, aes(x = as.numeric(as.character(N)), y = Overall_Sparsi
   theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   scale_y_continuous(limits = c(0, 1))
 
-plot2_path <- paste0(out_dir, "Sparsity_Overall_Trend_Sparse.png")
+plot2_path <- file.path(out_dir, "Sparsity_Overall_Trend_Sparse.png")
 ggsave(plot2_path, p2, width = 8, height = 6)
 cat("Saved Plot 2:", plot2_path, "\n")
 
@@ -109,7 +110,7 @@ p3 <- ggplot(all_site_results, aes(x = N, y = Sparsity, fill = P)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold")) +
   scale_y_continuous(limits = c(0, 1))
 
-plot3_path <- paste0(out_dir, "Sparsity_Site_Boxplot_Sparse.png")
+plot3_path <- file.path(out_dir, "Sparsity_Site_Boxplot_Sparse.png")
 ggsave(plot3_path, p3, width = 8, height = 6)
 cat("Saved Plot 3:", plot3_path, "\n")
 

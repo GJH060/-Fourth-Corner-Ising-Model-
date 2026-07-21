@@ -3,7 +3,7 @@ fcir_code_dir = file.path(project_root, "Code", "FCIR")
 
 use_dense = FALSE   # FALSE -> Rdata_Sparse, TRUE -> Rdata_Dense
 
-rdata_dir = file.path(project_root, "Simulation_Results",
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR",
                       if (use_dense) "Rdata_Dense" else "Rdata_Sparse")
 infix = if (use_dense) "_Dense" else ""
 

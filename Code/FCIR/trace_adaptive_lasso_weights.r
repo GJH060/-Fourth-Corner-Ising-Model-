@@ -1,7 +1,7 @@
 library(glmnet)
 library(dplyr)
 
-project_root  = "E:/RStudio/thesis"
+project_root  = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_code_dir = file.path(project_root, "Code", "FCIR")
 source(file.path(fcir_code_dir, "estimate_adaptive_lasso_FCIR.r"))
 
@@ -17,10 +17,10 @@ trace_cases = list(                 # which (N, P) datasets to inspect
 trace_reps  = 1:5                    # which replicate indices b to trace
 tol         = 1e-8                   # |true coef| <= tol counts as a true zero
 
-rdata_dir = file.path(project_root, "Simulation_Results",
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR",
                       if (use_dense) "Rdata_Dense" else "Rdata_Sparse")
 infix     = if (use_dense) "_Dense" else ""
-out_dir   = file.path(project_root, "Simulation_Results", "tables")
+out_dir   = file.path(project_root, "Simulation_Results", "FCIR", "tables")
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 # ---- Helper: render a data.frame as a bordered ASCII table -----------------

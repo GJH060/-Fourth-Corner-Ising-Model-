@@ -5,11 +5,11 @@ project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 
 use_dense = FALSE        # FALSE -> Rdata_Sparse, TRUE -> Rdata_Dense
 init_method = "unpenalized"  # must match the init used in main_adaptive_lasso_weaken_alpha0_and_Amat.r ("ridge" / "unpenalized")
-rdata_dir = file.path(project_root, "Simulation_Results",
+rdata_dir = file.path(project_root, "Simulation_Results", "FCIR",
                       if (use_dense) "Rdata_Dense" else "Rdata_Sparse")
 infix = if (use_dense) "_Dense" else ""
 scenario_suffix = "_weaken alpha0 and Amat"
-out_dir = file.path(project_root, "Simulation_Results", "tables")
+out_dir = file.path(project_root, "Simulation_Results", "FCIR", "tables")
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 Ns = c(50, 100, 200, 400, 800)

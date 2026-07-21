@@ -1,6 +1,11 @@
 library(car)
 library(corrplot)
 
+project_root <- "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+rdata_dir <- file.path(project_root, "Simulation_Results", "FCIR", "Rdata_Sparse")
+plot_dir <- file.path(project_root, "Simulation_Results", "FCIR", "plots")
+if (!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
+
 Ns <- c(50, 100, 200, 400, 800)
 Ps <- c(30, 60)
 
@@ -8,7 +13,7 @@ for (n in Ns) {
   for (p in Ps) {
     
     # Specify the data file to read
-    data_file <- paste0("E:/RStudio/thesis/Simulation_Results/FCIR_data_N", n, "_P", p, ".Rdata")
+    data_file <- file.path(rdata_dir, paste0("FCIR_data_N", n, "_P", p, ".Rdata"))
     
     if (!file.exists(data_file)) {
       warning(paste("Data file not found:", data_file, "- Skipping."))
@@ -100,7 +105,7 @@ for (n in Ns) {
     cat("Condition Number:", round(condition_number, 2), "\n")
     cat("Kappa Index (sqrt of Cond Num):", round(kappa_index, 2), "\n")
     
-    plot_filename <- paste0("E:/RStudio/thesis/Simulation_Results/Correlation_DesignMatrix_glmX_N", n, "_P", p, ".png")
+    plot_filename <- file.path(plot_dir, paste0("Correlation_DesignMatrix_glmX_N", n, "_P", p, ".png"))
     png(plot_filename, width = 1000, height = 1000, res = 120)
     corrplot(cor_matrix, method="color", type="upper", tl.col="black", tl.cex=0.8,
              title = paste("Correlation within the Design Matrix (N =", n, ", P =", p, ")"), 
