@@ -2,10 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-.positai
 
 # Simulation data (large binary outputs; regenerate with main.r / main_without_sparsity.r)
 *.Rdata
+testexample.RData
 Simulation_Results/Rdata_Sparse/
 Simulation_Results/Rdata_Dense/
 
