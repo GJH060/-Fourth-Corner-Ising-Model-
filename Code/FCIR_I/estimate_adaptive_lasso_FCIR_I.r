@@ -35,17 +35,25 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
   # FCIR_I has species-specific intercepts inside the design and is fit with
   # intercept = FALSE, so columns are scaled by their SD but NOT centered, to
   # keep the linear predictor intact without a single global intercept.
-  init_fit <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr, standardize = FALSE)
-  getsds <- init_fit$getsds
-  Xdes_raw <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr, returnX_only = TRUE)
-  Xdes <- sweep(Xdes_raw, 2, getsds, "/")   # standardized design (SD scaling only)
+  init_fit <- estimate_unpenalized_FCIR_I(Y = Y, 
+                                          X = X, 
+                                          Tr = Tr, 
+                                          standardize = TRUE)
+  # getsds <- init_fit$getsds
+  # Xdes_raw <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr, returnX_only = TRUE)
+  # index_intercept_cols <- seq(1, P * L, by = L)
+  # Xdes <- Xdes_raw
+  # Xdes[,-index_intercept_cols] <- sweep(Xdes_raw[,-index_intercept_cols], 2, getsds[-index_intercept_cols], "/")   # standardized design (SD scaling only)
   glm_Y <- as.numeric(init_fit$glm_model$y)
 
   # Initial estimator on the standardized scale for the adaptive weights:
   # rescaling column c by 1/sd_c multiplies its unpenalized coefficient by sd_c.
-  beta_init <- as.numeric(coef(init_fit$glm_model)) * getsds
+  # beta_init <- as.numeric(coef(init_fit$glm_model)) 
+  # beta_init[-index_intercept_cols] <- beta_init[-index_intercept_cols] * getsds[-index_intercept_cols]   # rescale to raw scale
+  beta_init <- as.numeric(coef(init_fit$glm_model))
   beta_init[!is.finite(beta_init)] <- 0
-
+  Xdes <- model.matrix(init_fit$glm_model)
+  
   eps <- 1e-6
   pen_factor <- 1 / (abs(beta_init) + eps)^gamma
   if (length(custom_penalty_factor) != 1 &&
@@ -95,8 +103,10 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
   }
 
   # Resolve: standardized coefficient / sd = coefficient on the raw scale.
-  final_coefs <- est_coefs / getsds
-
+  final_coefs <- est_coefs
+  final_coefs[init_fit$index_standardized_cols == 1] <- est_coefs[init_fit$index_standardized_cols == 1] / init_fit$getsds[init_fit$index_standardized_cols == 1]
+  
+  
   idx <- 1
   hat_Beta_vec <- final_coefs[idx:(idx + P * L - 1)]; idx <- idx + P * L
   hat_alpha_0  <- final_coefs[idx:(idx + L - 1)]; idx <- idx + L
