@@ -79,14 +79,10 @@ for (n in Ns) {
         gamma = gamma_value, init = init_method,
         lambda = lambda_rule, use_cv = TRUE, cv_group_by_site = TRUE
       )
-      out = list(beta_0 = res$beta_0,
-                 B_mat = res$B_mat,
-                 Theta_int = res$Theta_int,
-                 lambda = res$selected_lambda)
-      # Free the heavy glm / cv.glmnet objects so per-worker memory does not
-      # accumulate across the many sequential tasks (avoids worker OOM crashes).
-      rm(res); gc(FALSE)
-      out
+      list(beta_0 = res$beta_0,
+           B_mat = res$B_mat,
+           Theta_int = res$Theta_int,
+           lambda = res$selected_lambda)
     }
     rm(Y_slices)
 
