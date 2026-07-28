@@ -17,3 +17,5 @@ _tmp_*.R
 _chk_*.R
 _diag_*.R
 _check_*.R
+.positai
+.positai
