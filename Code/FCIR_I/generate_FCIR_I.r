@@ -12,7 +12,7 @@ generate_fcir_I_data <- function(N, P, L, K, B_reps, seed, filename){
     
     # Interaction Effect Parameters.
     alpha_0 = runif(L, -1, 1)*0.4
-    A_mat = matrix(runif(L * K, -1, 1)*0.4, nrow = L, ncol = K) 
+    A_mat = matrix(runif(L * K, -1, 1)*0.4, nrow = L, ncol = K)
     A_mat[order(abs(A_mat))[1:3]] = 0
     
     Y = array(data = NA, dim = c(N, P, B_reps))

@@ -50,7 +50,7 @@ apply(Delta, 3, function(x) mean(x[upper.tri(x)]))
 
 
 ##------------------------
-#' # Fit various forms of the FCIR model 
+#' # Fit various forms of the FCIR model or a special case of it
 ##------------------------
 # fit_FCIR_unpen_nostan <- estimate_unpenalized_FCIR(Y = Y[,,1],
 #                                                    X = X,
@@ -60,6 +60,21 @@ fit_FCIR_unpen_nostan <- estimate_unpenalized_FCIR_I(Y = Y[,,1],
                                                      X = X,
                                                      Tr = Tr,
                                                      standardize = FALSE)
+# MM <- model.matrix(fit_FCIR_unpen_nostan$glm_model)
+# fit0 <- glm(fit_FCIR_unpen_nostan$glm_model$y ~ scale(MM,center=FALSE) - 1, family = binomial(link = "logit"))
+# plot(as.vector(t(Beta_mat)), (fit0$coefficients[1:(P*L)] / apply(MM, 2, sd)[1:(P*L)])); abline(0,1)
+# fit0$penalty_factor <- 1/abs(fit0$coefficients)
+# fit0$penalty_factor[seq(1, P*L, by = L)] <- 0
+# fit01 <- cv.glmnet(y = fit_FCIR_unpen_nostan$glm_model$y, 
+#                    x = scale(MM,center=FALSE), 
+#                    family = "binomial",
+#                    intercept = FALSE,
+#                    standardize = FALSE,
+#                    penalty.factor = fit0$penalty_factor,
+#                    alpha = 1)
+# (coef(fit01, s = "lambda.min")[-1] / apply(MM, 2, sd))[1:(P*L)] %>% plot(as.vector(t(Beta_mat)), .); abline(0,1)
+
+
 
 # fit_FCIR_unpen <- estimate_unpenalized_FCIR(Y = Y[,,1],
 #                                             X = X,
