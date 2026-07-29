@@ -7,9 +7,13 @@ generate_sparse_beta_fcir_I_data <- function(N, P, L, K, B_reps, seed, filename)
 
     set.seed(seed)
     # Sparse Beta_mat: P x L matrix. Each row is beta_j for species j.
-    # Set the smallest-magnitude half of the P*L coefficients to zero.
+    # The first column contains unpenalized species-specific intercepts and
+    # remains dense; set half of the environmental slopes to zero.
     Beta_mat = matrix(runif(P * L, -1, 1), nrow = P, ncol = L)
-    Beta_mat[order(abs(Beta_mat))[1:floor(P * L / 2)]] = 0
+    slope_idx = which(col(Beta_mat) > 1)
+    n_zero_slopes = floor(length(slope_idx) / 2)
+    zero_idx = slope_idx[order(abs(Beta_mat[slope_idx]))[seq_len(n_zero_slopes)]]
+    Beta_mat[zero_idx] = 0
 
     # Interaction Effect Parameters.
     alpha_0 = runif(L, -1, 1)*0.4
