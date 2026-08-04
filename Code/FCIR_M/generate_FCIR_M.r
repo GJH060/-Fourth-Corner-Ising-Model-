@@ -6,10 +6,6 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   # Interaction network is simplified to static, site-independent residual associations.
   
   set.seed(seed)
-  Y = array(data = NA, dim = c(N, P, B_reps))
-  X = matrix(rnorm(N * L), nrow = N, ncol = L)
-  X[,1] = 1 
-  Tr = matrix(runif(P * K, min = -1, max = 1), nrow = P, ncol = K)
   
   # Main Effect Parameters (same scale as FCIR / FCIR_I; only B_mat is sparse).
   beta_0 = runif(L, -1, 1)
@@ -20,14 +16,14 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   # Theta_int: P x P symmetric matrix independent of environment and traits.
   Theta_int = matrix(0, nrow = P, ncol = P)
   n_edges = P * (P - 1) / 2
-  # Same sparsity rule as B_mat: runif(-1, 1) potentials, then zero the
-  # smallest-magnitude half of the edges.
-  upper_tri_vals = runif(n_edges, -0.5, 0.5)
-  upper_tri_vals[order(abs(upper_tri_vals))[1:floor(n_edges / 2)]] = 0
-  Theta_int[upper.tri(Theta_int)] = upper_tri_vals
+  sel_nonzeros <- sample(1:n_edges, size = floor(n_edges / 3), replace = FALSE)
+  Theta_int[upper.tri(Theta_int)][sel_nonzeros] = sample(c(-0.25, 0.25), size = length(sel_nonzeros), replace = TRUE)
   Theta_int[lower.tri(Theta_int)] = t(Theta_int)[lower.tri(Theta_int)]
   
-  # (No Delta computation needed for FCIR_M)
+  Y = array(data = NA, dim = c(N, P, B_reps))
+  X = matrix(rnorm(N * L), nrow = N, ncol = L)
+  X[,1] = 1 
+  Tr = matrix(runif(P * K, min = -1, max = 1), nrow = P, ncol = K)
   
   Beta_temp = 1 
   
@@ -48,11 +44,28 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
       Theta_s = Theta_int 
       
       # Step C: Sample response 
-      sampled_y = IsingSampler(1, Theta_s, theta_jj_s, Beta_temp, 1000/P, 
-                               responses = c(0L, 1L), method = "MH")
+      sampled_y = IsingSampler(1, 
+                               Theta_s, 
+                               theta_jj_s, 
+                               beta = Beta_temp, 
+                               nIter = 1000, 
+                               responses = c(0L, 1L), 
+                               method = "MH")
       Y_b[s, ] = sampled_y
     }
     Y[,,b] = Y_b
   }
-  save(Y, X, Tr, beta_0, B_mat, Theta_int, N, P, L, K, B_reps, seed, file = filename)
+  save(Y, 
+       X, 
+       Tr, 
+       beta_0, 
+       B_mat, 
+       Theta_int, 
+       N, 
+       P, 
+       L, 
+       K, 
+       B_reps, 
+       seed, 
+       file = filename)
 }
