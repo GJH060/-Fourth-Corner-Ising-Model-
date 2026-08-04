@@ -1,6 +1,8 @@
 library(glmnet)
 
-estimate_adaptive_lasso_FCIR_M <- function(Y, X, Tr,
+estimate_adaptive_lasso_FCIR_M <- function(Y, 
+                                           X, 
+                                           Tr,
                                            gamma = 1,
                                            init = "unpenalized",
                                            lambda = "lambda.min",
@@ -61,17 +63,18 @@ estimate_adaptive_lasso_FCIR_M <- function(Y, X, Tr,
 
   # Separate out the global intercept: beta_0[1] (design column 1, the x_s[1] = 1
   # term) is left unpenalized, mirroring how FCIR leaves beta_0[1] unpenalized.
+  # Note this ends up not being used anyway due to the use of intercept = TRUE in glmnet, but we set it to 0 here for clarity.
   pen_factor[1] <- 0
 
-  # Adaptive lasso on the manually standardized design (standardize = FALSE).
+  # Adaptive lasso on the manually standardized design (standardize = FALSE)
   if (use_cv) {
-    ad_fit <- cv.glmnet(Xdes,
+    ad_fit <- cv.glmnet(Xdes[,-1], 
                         glm_Y,
                         family = "binomial",
-                        intercept = FALSE,
+                        intercept = TRUE,
                         standardize = FALSE,
                         alpha = 1,
-                        penalty.factor = pen_factor,
+                        penalty.factor = pen_factor[-1],
                         foldid = make_site_folds())
 
     sel_lambda <- if (is.character(lambda) && lambda %in% c("lambda.min", "lambda.1se")) {
@@ -80,22 +83,19 @@ estimate_adaptive_lasso_FCIR_M <- function(Y, X, Tr,
       lambda
     }
   } else {
-    ad_fit <- glmnet(Xdes,
+    ad_fit <- glmnet(Xdes[,-1],
                      glm_Y,
                      family = "binomial",
-                     intercept = FALSE,
+                     intercept = TRUE,
                      standardize = FALSE,
                      alpha = 1,
-                     penalty.factor = pen_factor,
+                     penalty.factor = pen_factor[-1],
                      lambda = lambda)
     sel_lambda <- lambda
   }
 
   est_coefs <- as.numeric(coef(ad_fit, s = sel_lambda))
-  if (length(est_coefs) == ncol(Xdes) + 1) {
-    est_coefs <- est_coefs[-1]   # drop the (zero) glmnet intercept slot
-  }
-
+  
   # Resolve: standardized coefficient / sd = coefficient on the raw scale.
   final_coefs <- est_coefs / scale_sds
 
@@ -108,16 +108,14 @@ estimate_adaptive_lasso_FCIR_M <- function(Y, X, Tr,
   hat_Theta_int[upper.tri(hat_Theta_int)] <- hat_theta_int_vec
   hat_Theta_int[lower.tri(hat_Theta_int)] <- t(hat_Theta_int)[lower.tri(hat_Theta_int)]
 
-  list(
-    beta_0 = hat_beta_0,
-    B_mat = matrix(hat_B_vec, nrow = L, ncol = K),
-    Theta_int = hat_Theta_int,
-    adaptive_model = ad_fit,
-    cv_model = if (use_cv) ad_fit else NULL,
-    init_model = init_fit,
-    penalty_factor = pen_factor,
-    selected_lambda = sel_lambda,
-    gamma = gamma,
-    use_cv = use_cv
-  )
+  list(beta_0 = hat_beta_0,
+       B_mat = matrix(hat_B_vec, nrow = L, ncol = K),
+       Theta_int = hat_Theta_int,
+       adaptive_model = ad_fit,
+       cv_model = if (use_cv) ad_fit else NULL,
+       init_model = init_fit,
+       penalty_factor = pen_factor,
+       selected_lambda = sel_lambda,
+       gamma = gamma,
+       use_cv = use_cv)
 }
