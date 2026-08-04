@@ -1,5 +1,7 @@
-estimate_unpenalized_FCIR_M <- function(Y, X, Tr,
-                                        standardize = FALSE,
+estimate_unpenalized_FCIR_M <- function(Y, 
+                                        X, 
+                                        Tr,
+                                         standardize = FALSE,
                                         returnX_only = FALSE){
   # Y: N x P binary response matrix
   # X: N x L environment matrix (first column is 1s for intercept)
@@ -67,7 +69,7 @@ estimate_unpenalized_FCIR_M <- function(Y, X, Tr,
   }
 
   # 3. Fit Unpenalized Logistic Regression
-  logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial, control = glm.control(maxit = 100))
+  logistic_reg = glm(glm_Y ~ glm_X + 0, family = binomial)
   est_coefs = logistic_reg$coefficients
   
   # 4. Extract and reshape parameters
@@ -83,12 +85,11 @@ estimate_unpenalized_FCIR_M <- function(Y, X, Tr,
   hat_Theta_int[upper.tri(hat_Theta_int)] = hat_theta_int_vec
   hat_Theta_int[lower.tri(hat_Theta_int)] = t(hat_Theta_int)[lower.tri(hat_Theta_int)]
   
-  return(list(
-    beta_0 = hat_beta_0,
-    B_mat = hat_B_mat,
-    Theta_int = hat_Theta_int,
-    standardize = standardize,
-    getsds = getsds,
-    glm_model = logistic_reg
-  ))
-}
+  return(list(beta_0 = hat_beta_0,
+              B_mat = hat_B_mat,
+              Theta_int = hat_Theta_int,
+              standardize = standardize,
+              getsds = getsds,
+              glm_model = logistic_reg))
+  }
+
