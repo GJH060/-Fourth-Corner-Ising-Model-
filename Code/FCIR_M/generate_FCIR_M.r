@@ -22,7 +22,7 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   n_edges = P * (P - 1) / 2
   # Same sparsity rule as B_mat: runif(-1, 1) potentials, then zero the
   # smallest-magnitude half of the edges.
-  upper_tri_vals = runif(n_edges, -1, 1)
+  upper_tri_vals = runif(n_edges, -0.5, 0.5)
   upper_tri_vals[order(abs(upper_tri_vals))[1:floor(n_edges / 2)]] = 0
   Theta_int[upper.tri(Theta_int)] = upper_tri_vals
   Theta_int[lower.tri(Theta_int)] = t(Theta_int)[lower.tri(Theta_int)]
