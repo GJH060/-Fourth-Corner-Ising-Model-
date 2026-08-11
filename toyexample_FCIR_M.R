@@ -9,8 +9,8 @@ source("Code/FCIR_M/estimate_adaptive_lasso_FCIR_M.r")
 ##------------------------
 #' # Simulate multivariate binary data from FCIR_M model 
 ##------------------------
-Ns <- 50
-Ps <- 20
+Ns <- 1000
+Ps <- 10
 
 # Global fixed parameters
 L = 3 # Number of covariates
@@ -41,6 +41,12 @@ fit_unpen_nostan <- estimate_unpenalized_FCIR_M(Y = Y[,,1],
                                                 X = X,
                                                 Tr = Tr,
                                                 standardize = FALSE)
+
+data.frame(true = Theta_int[lower.tri(Theta_int)], 
+           unpen = fit_unpen_nostan$Theta_int[lower.tri(fit_unpen_nostan$Theta_int)]) %>% 
+    plot
+abline(0,1)
+
 
 fit_adaptivelasso <- estimate_adaptive_lasso_FCIR_M(Y = Y[,,1],
                                                     X = X,
