@@ -33,7 +33,7 @@ total_start = Sys.time()
 for (n in Ns) {
   for (p in Ps) {
     data_filename = file.path(rdata_dir, paste0("FCIR_M_data_N", n, "_P", p, ".Rdata"))
-    est_filename = file.path(rdata_dir, paste0("FCIR_M_estimates_adaptive_lasso_", init_method, "_N", n, "_P", p, ".Rdata"))
+    est_filename = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", init_method, "_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
       print(paste("FCIR_M data not found, skipping:", data_filename))

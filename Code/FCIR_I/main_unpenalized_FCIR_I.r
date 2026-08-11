@@ -1,6 +1,21 @@
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 fcir_i_code_dir = file.path(project_root, "Code", "FCIR_I")
-rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_I", "Rdata")
+
+# Set to TRUE to fit the sparse-Beta data, or FALSE for the original dense
+# Beta_mat data. Must match the setting used in main_generate_data_FCIR_I.r.
+use_sparse_beta = TRUE
+
+if (use_sparse_beta) {
+  rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_I", "Rdata_Sparse_Beta")
+  est_tag = "unpenalized_sparse_Beta"
+  data_label = "FCIR_I sparse-Beta"
+  beta_structure = "sparse"
+} else {
+  rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_I", "Rdata")
+  est_tag = "unpenalized"
+  data_label = "FCIR_I"
+  beta_structure = "dense"
+}
 
 source(file.path(fcir_i_code_dir, "estimate_FCIR_I.r"))
 
@@ -27,20 +42,20 @@ total_start = Sys.time()
 for (n in Ns) {
   for (p in Ps) {
     data_filename = file.path(rdata_dir, paste0("FCIR_I_data_N", n, "_P", p, ".Rdata"))
-    est_filename = file.path(rdata_dir, paste0("FCIR_I_estimates_unpenalized_N", n, "_P", p, ".Rdata"))
+    est_filename = file.path(rdata_dir, paste0("FCIR_I_estimates_", est_tag, "_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
-      print(paste("FCIR_I data not found, skipping:", data_filename))
+      print(paste(data_label, "data not found, skipping:", data_filename))
       next
     }
 
     if (file.exists(est_filename)) {
-      print(paste("FCIR_I unpenalized estimates already exist for N =", n,
+      print(paste(data_label, "unpenalized estimates already exist for N =", n,
                   ", P =", p, "- Skipping."))
       next
     }
 
-    print(paste("Loading FCIR_I data ( N =", n, ", P =", p, ")..."))
+    print(paste("Loading", data_label, "data ( N =", n, ", P =", p, ")..."))
     load(data_filename)   # Y, X, Tr, Beta_mat, alpha_0, A_mat, ...
 
     class_counts = t(vapply(seq_len(dim(Y)[3]), function(b) {
@@ -49,14 +64,14 @@ for (n in Ns) {
     bad_reps = which(class_counts[, "zeros"] == 0 | class_counts[, "ones"] == 0)
     if (length(bad_reps) > 0) {
       stop(paste0(
-        "FCIR_I data contain ", length(bad_reps),
+        data_label, " data contain ", length(bad_reps),
         " replicate(s) with only one response class at N=", n, ", P=", p,
         ". First bad reps: ", paste(head(bad_reps, 20), collapse = ", "),
         ". Regenerate the data before fitting."
       ))
     }
 
-    print(paste("Starting", B_reps, "FCIR_I unpenalized fits for N =",
+    print(paste("Starting", B_reps, data_label, "unpenalized fits for N =",
                 n, "P =", p, "..."))
 
     est_Beta_mat = array(NA, dim = c(P, L, B_reps))
@@ -87,7 +102,7 @@ for (n in Ns) {
     method = "unpenalized"
     save(est_Beta_mat, est_alpha_0, est_A_mat, est_converged,
          Beta_mat, alpha_0, A_mat,
-         N = n, P = p, L, K, B_reps, seed, method,
+         N = n, P = p, L, K, B_reps, seed, method, beta_structure,
          file = est_filename)
     print(paste("Saved:", est_filename,
                 "- converged:", sum(est_converged), "/", B_reps))
@@ -95,5 +110,5 @@ for (n in Ns) {
 }
 
 stopCluster(cl)
-print(paste("Total FCIR_I unpenalized execution time:",
+print(paste("Total", data_label, "unpenalized execution time:",
             Sys.time() - total_start))

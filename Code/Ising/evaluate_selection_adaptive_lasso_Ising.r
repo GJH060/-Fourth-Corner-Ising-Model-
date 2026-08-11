@@ -1,14 +1,10 @@
 library(dplyr)
 
-project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
-rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "Rdata")
-out_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "tables")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+
+out_dir = table_dir
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
-Ns = c(50, 100, 200, 400, 800)
-Ps = c(10, 20)
-
-init_method = "unpenalized"
 tol = 1e-8
 
 evaluate_selection <- function(true_vector, est_matrix, tol = 1e-8) {
@@ -47,14 +43,11 @@ evaluate_selection <- function(true_vector, est_matrix, tol = 1e-8) {
   )
 }
 
-flatten_estimates <- function(est_arr) {
-  t(apply(est_arr, 3, as.vector))
-}
-
-# Theta_int is symmetric; evaluate only the upper-triangle edges.
-flatten_upper <- function(est_arr) {
-  ut <- upper.tri(matrix(0, nrow = dim(est_arr)[1], ncol = dim(est_arr)[2]))
-  t(apply(est_arr, 3, function(m) m[ut]))
+# Theta is symmetric, so only the upper triangle carries distinct edges.
+flatten_upper_tri <- function(Theta_arr) {
+  P <- dim(Theta_arr)[1]
+  ut <- upper.tri(matrix(0, P, P))
+  t(apply(Theta_arr, 3, function(m) m[ut]))
 }
 
 format_ascii_table <- function(x, digits = 3) {
@@ -93,50 +86,47 @@ results = list()
 
 for (n in Ns) {
   for (p in Ps) {
-    f = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", init_method, "_N", n, "_P", p, ".Rdata"))
+    f = file.path(rdata_dir,
+                  paste0("Ising_estimates_adaptive_lasso", setting_tag, "_",
+                         init_method, "_N", n, "_P", p, ".Rdata"))
     if (!file.exists(f)) {
-      warning(paste("Missing:", f, "- run main_adaptive_lasso_FCIR_M.r first. Skipping."))
+      warning(paste("Missing:", f, "- run main_adaptive_lasso_Ising.r first. Skipping."))
       next
     }
     e = new.env(); load(f, envir = e)
 
-    true_vec = as.vector(e$B_mat)
-    est_mat = flatten_estimates(e$est_B_mat)
+    ut = upper.tri(matrix(0, p, p))
+
+    true_vec = e$Theta[ut]
+    est_mat = flatten_upper_tri(e$est_Theta)
     summ = evaluate_selection(true_vec, est_mat, tol = tol)
-    summ$N = n; summ$P = p; summ$Matrix = "B"
+    summ$N = n; summ$P = p; summ$Matrix = "Theta"
     summ$n_nonzero = sum(abs(true_vec) > tol)
     summ$n_total = length(true_vec)
-    results[[paste("B", n, p, sep = "_")]] = summ
+    results[[paste("Theta", n, p, sep = "_")]] = summ
 
-    true_vec = as.vector(e$Theta_int[upper.tri(e$Theta_int)])
-    est_mat = flatten_upper(e$est_Theta_int)
+    true_vec = as.vector(e$theta_jj)
+    est_mat = e$est_theta_jj
     summ = evaluate_selection(true_vec, est_mat, tol = tol)
-    summ$N = n; summ$P = p; summ$Matrix = "Theta_int"
+    summ$N = n; summ$P = p; summ$Matrix = "theta_jj"
     summ$n_nonzero = sum(abs(true_vec) > tol)
     summ$n_total = length(true_vec)
-    results[[paste("Theta_int", n, p, sep = "_")]] = summ
+    results[[paste("theta_jj", n, p, sep = "_")]] = summ
 
-    true_vec = as.vector(e$beta_0)
-    est_mat = e$est_beta_0
-    summ = evaluate_selection(true_vec, est_mat, tol = tol)
-    summ$N = n; summ$P = p; summ$Matrix = "beta_0"
-    summ$n_nonzero = sum(abs(true_vec) > tol)
-    summ$n_total = length(true_vec)
-    results[[paste("beta_0", n, p, sep = "_")]] = summ
-
-    message("Evaluated FCIR_M adaptive lasso metrics: N=", n, ", P=", p)
+    message("Evaluated Ising adaptive lasso metrics: N=", n, ", P=", p)
   }
 }
 
-if (length(results) == 0) stop("No FCIR_M adaptive lasso estimate files found.")
+if (length(results) == 0) stop("No Ising adaptive lasso estimate files found.")
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
   arrange(Matrix, N, P, Metric)
 
-out_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_", init_method, ".csv"))
+out_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection", setting_tag,
+                                    "_", init_method, ".csv"))
 write.csv(df, out_csv, row.names = FALSE)
-message("Saved FCIR_M selection summary table: ", out_csv)
+message("Saved Ising selection summary table: ", out_csv)
 
 selection_wide = df %>%
   select(-SD) %>%
@@ -146,14 +136,15 @@ selection_wide = df %>%
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
   arrange(Matrix, N, P)
 
-selection_wide_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", init_method, ".csv"))
+selection_wide_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection_wide",
+                                               setting_tag, "_", init_method, ".csv"))
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)
 
-selection_wide_txt = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", init_method, ".txt"))
+selection_wide_txt = file.path(out_dir, paste0("Ising_adaptive_lasso_selection_wide",
+                                               setting_tag, "_", init_method, ".txt"))
 writeLines(format_ascii_table(selection_wide), selection_wide_txt)
 
-message("FCIR_M adaptive lasso selection table:")
+message("Ising adaptive lasso selection table:")
 writeLines(format_ascii_table(selection_wide))
-message("Saved FCIR_M wide selection summary table: ", selection_wide_csv)
-message("Saved FCIR_M bordered wide selection table: ", selection_wide_txt)
-message("Finished FCIR_M adaptive lasso selection evaluation.")
+message("Saved Ising wide selection summary table: ", selection_wide_csv)
+message("Saved Ising bordered wide selection table: ", selection_wide_txt)
