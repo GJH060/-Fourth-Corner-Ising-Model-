@@ -32,10 +32,10 @@ total_start = Sys.time()
 
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(rdata_dir, paste0("FCIR_I_data_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(rdata_dir, paste0("Rescale_FCIR_I_data_N", n, "_P", p, ".Rdata"))
     est_filename = file.path(
       rdata_dir,
-      paste0("FCIR_I_estimates_adaptive_lasso_sparse_Beta_", init_method,
+      paste0("Rescale_FCIR_I_estimates_adaptive_lasso_sparse_Beta_", init_method,
              "_N", n, "_P", p, ".Rdata")
     )
 

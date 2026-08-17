@@ -16,9 +16,13 @@ generate_sparse_beta_fcir_I_data <- function(N, P, L, K, B_reps, seed, filename)
     Beta_mat[zero_idx] = 0
 
     # Interaction Effect Parameters.
-    alpha_0 = runif(L, -1, 1)*0.4
-    A_mat = matrix(runif(L * K, -1, 1)*0.4, nrow = L, ncol = K)
-    A_mat[order(abs(A_mat))[1:3]] = 0
+    #alpha_0 = runif(L, -1, 1)*0.4
+    #A_mat = matrix(runif(L * K, -1, 1)*0.4, nrow = L, ncol = K)
+    #A_mat[order(abs(A_mat))[1:3]] = 0
+    alpha_0 = c(-0.1,-0.1,0.1)
+    A_mat = matrix(0, nrow = L, ncol = K)
+    A_mat[sample(1:(L*K), size = 3)] = sample(c(-0.25,0.25), size = 3, replace = TRUE)
+
 
     Y = array(data = NA, dim = c(N, P, B_reps))
     X = matrix(rnorm(N * L), nrow = N, ncol = L)

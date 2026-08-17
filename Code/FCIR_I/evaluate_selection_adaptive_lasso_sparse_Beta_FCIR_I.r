@@ -89,7 +89,7 @@ for (n in Ns) {
   for (p in Ps) {
     f = file.path(
       rdata_dir,
-      paste0("FCIR_I_estimates_adaptive_lasso_sparse_Beta_", init_method,
+      paste0("Rescale_FCIR_I_estimates_adaptive_lasso_sparse_Beta_", init_method,
              "_N", n, "_P", p, ".Rdata")
     )
     if (!file.exists(f)) {
@@ -137,7 +137,7 @@ df = bind_rows(results) %>%
 
 out_csv = file.path(
   out_dir,
-  paste0("FCIR_I_adaptive_lasso_selection_sparse_Beta_", init_method, ".csv")
+  paste0("Rescale_FCIR_I_adaptive_lasso_selection_sparse_Beta_", init_method, ".csv")
 )
 write.csv(df, out_csv, row.names = FALSE)
 message("Saved FCIR_I sparse-Beta selection summary table: ", out_csv)
@@ -152,13 +152,13 @@ selection_wide = df %>%
 
 selection_wide_csv = file.path(
   out_dir,
-  paste0("FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_", init_method, ".csv")
+  paste0("Rescale_FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_", init_method, ".csv")
 )
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)
 
 selection_wide_txt = file.path(
   out_dir,
-  paste0("FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_", init_method, ".txt")
+  paste0("Rescale_FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_", init_method, ".txt")
 )
 writeLines(format_ascii_table(selection_wide), selection_wide_txt)
 
