@@ -1,4 +1,4 @@
-# Compare interaction-network selection metrics:
+# Compare interaction-network selection metrics on the same FCIR_M data:
 #   Ising_joint  Theta   vs  FCIR_M  Theta_int
 # at matching (N, P), for correct zeros / correct nonzeros / F1 / RMSE.
 
@@ -8,9 +8,13 @@ library(tidyr)
 
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 
+ising_joint_csv = file.path(
+  project_root, "Simulation_Results", "Ising", "tables",
+  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_unpenalized.csv"
+)
 ising_joint_txt = file.path(
   project_root, "Simulation_Results", "Ising", "tables",
-  "Ising_adaptive_lasso_selection_wide_jjdens0333_joint_unpenalized.txt"
+  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_unpenalized.txt"
 )
 fcir_m_csv = file.path(
   project_root, "Simulation_Results", "FCIR_M", "tables",
@@ -23,7 +27,7 @@ fcir_m_txt = file.path(
 
 out_dir = file.path(
   project_root, "Simulation_Results", "comparison_plots",
-  "Ising_joint_Theta_vs_FCIR_M_Theta_int"
+  "Ising_joint_on_FCIR_M_Theta_vs_FCIR_M_Theta_int"
 )
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
@@ -52,10 +56,17 @@ rename_metrics <- function(df) {
   df
 }
 
-ising = read_bordered_table(ising_joint_txt) %>%
-  filter(Matrix == "Theta") %>%
-  mutate(Model = "Ising_joint (Theta)") %>%
-  rename_metrics()
+if (file.exists(ising_joint_csv)) {
+  ising = read.csv(ising_joint_csv, check.names = FALSE, stringsAsFactors = FALSE) %>%
+    filter(Matrix == "Theta") %>%
+    mutate(Model = "Ising_joint (Theta)") %>%
+    rename_metrics()
+} else {
+  ising = read_bordered_table(ising_joint_txt) %>%
+    filter(Matrix == "Theta") %>%
+    mutate(Model = "Ising_joint (Theta)") %>%
+    rename_metrics()
+}
 
 if (file.exists(fcir_m_csv)) {
   fcir_m = read.csv(fcir_m_csv, check.names = FALSE, stringsAsFactors = FALSE) %>%
@@ -111,7 +122,7 @@ plot_main = metric_long %>%
   scale_x_continuous(trans = "log2", breaks = sort(unique(cmp$N))) +
   facet_grid(Metric ~ P_lab, scales = "free_y") +
   labs(
-    title = "Ising_joint Theta vs FCIR_M Theta_int (adaptive lasso)",
+    title = "Ising_joint Theta vs FCIR_M Theta_int (same FCIR_M data, adaptive lasso)",
     x = "N (log2 scale)",
     y = NULL,
     colour = NULL,
@@ -131,7 +142,7 @@ plot_rates = metric_long %>%
   scale_x_continuous(trans = "log2", breaks = sort(unique(cmp$N))) +
   facet_grid(Metric ~ P_lab, scales = "free_y") +
   labs(
-    title = "Ising_joint Theta vs FCIR_M Theta_int (rates + F1 + RMSE)",
+    title = "Ising_joint Theta vs FCIR_M Theta_int (same FCIR_M data; rates + F1 + RMSE)",
     x = "N (log2 scale)",
     y = NULL,
     colour = NULL,
