@@ -5,6 +5,9 @@ source("Code/FCIR_M/generate_FCIR_M.r")
 source("Code/FCIR_M/estimate_FCIR_M.r")
 source("Code/FCIR_M/estimate_adaptive_lasso_FCIR_M.r")
 
+source("Code/Ising_joint/estimate_adaptive_lasso_Ising_joint.r")
+source("Code/Ising_joint/estimate_Ising_joint.r")
+
 
 ##------------------------
 #' # Simulate multivariate binary data from FCIR_M model 
@@ -37,6 +40,26 @@ t(beta_0 + tcrossprod(B_mat, Tr))
 ##------------------------
 #' # Fit various forms of the FCIR model or a special case of it
 ##------------------------
+fit_ising_nopen <- estimate_unpenalized_Ising_joint(Y = Y[,,1],
+                                                    standardize = TRUE) 
+
+fit_ising_nopen$theta_jj
+fit_ising_nopen$Theta
+
+
+fit_ising <- estimate_adaptive_lasso_Ising_joint(Y = Y[,,1],
+                                                 gamma = 1, 
+                                                 lambda = "lambda.min",
+                                                 use_cv = TRUE,
+                                                 cv_group_by_site = TRUE) 
+
+fit_ising$theta_jj
+fit_ising$Theta
+Theta_int
+
+
+
+
 fit_unpen_nostan <- estimate_unpenalized_FCIR_M(Y = Y[,,1],
                                                 X = X,
                                                 Tr = Tr,
