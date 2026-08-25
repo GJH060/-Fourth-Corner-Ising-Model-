@@ -126,7 +126,7 @@ if (length(results) == 0) stop("No FCIR_I adaptive lasso estimate files found.")
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
 out_csv = file.path(out_dir, paste0("FCIR_I_adaptive_lasso_selection_", init_method, ".csv"))
 write.csv(df, out_csv, row.names = FALSE)
@@ -138,7 +138,7 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
 selection_wide_csv = file.path(out_dir, paste0("FCIR_I_adaptive_lasso_selection_wide_", init_method, ".csv"))
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)

@@ -152,7 +152,7 @@ if (length(results) == 0) stop("No adaptive lasso estimate files found.")
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
 scenario_tag = paste0(if (use_dense) "Dense" else "Sparse", "_fixedN", N_fixed)
 out_csv = file.path(out_dir, paste0("adaptive_lasso_selection_", init_method, "_", scenario_tag, ".csv"))
@@ -167,7 +167,7 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 selection_wide_csv = file.path(out_dir, paste0("adaptive_lasso_selection_wide_", init_method, "_", scenario_tag, ".csv"))
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)
 selection_wide_txt = file.path(out_dir, paste0("adaptive_lasso_selection_wide_", init_method, "_", scenario_tag, ".txt"))
@@ -180,7 +180,7 @@ dense_wide = df %>%
   tidyr::pivot_wider(id_cols = c(Matrix, N, P, n_nonzero, n_total),
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total, nonzero_recovery_rate, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 dense_wide_csv = file.path(out_dir, paste0("adaptive_lasso_dense_diagnostics_wide_", init_method, "_", scenario_tag, ".csv"))
 write.csv(dense_wide, dense_wide_csv, row.names = FALSE)
 dense_wide_txt = file.path(out_dir, paste0("adaptive_lasso_dense_diagnostics_wide_", init_method, "_", scenario_tag, ".txt"))

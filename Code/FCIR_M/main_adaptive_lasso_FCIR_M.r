@@ -8,18 +8,24 @@ source(file.path(fcir_m_code_dir, "estimate_adaptive_lasso_FCIR_M.r"))
 library(foreach)
 library(doParallel)
 
-n_cores = max(1, parallel::detectCores() - 1)
-cl = makeCluster(n_cores)
-registerDoParallel(cl)
-clusterCall(cl, function(dir) {
-  source(file.path(dir, "estimate_FCIR_M.r"))
-  source(file.path(dir, "estimate_adaptive_lasso_FCIR_M.r"))
-}, dir = fcir_m_code_dir)
+start_cluster = function(n, p) {
+  n_cores = max(1, parallel::detectCores() - 1)
+
+  print(paste("Using", n_cores, "workers for N =", n, "P =", p))
+  cl = parallel::makeCluster(n_cores)
+  registerDoParallel(cl)
+  parallel::clusterEvalQ(cl, compiler::enableJIT(0))
+  parallel::clusterCall(cl, function(dir) {
+    source(file.path(dir, "estimate_FCIR_M.r"))
+    source(file.path(dir, "estimate_adaptive_lasso_FCIR_M.r"))
+  }, dir = fcir_m_code_dir)
+  cl
+}
 
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10, 20)
 
-L = 3
+L = 1
 K = 2
 B_reps = 1000
 seed = 2026
@@ -27,13 +33,15 @@ seed = 2026
 gamma_value = 1
 init_method = "unpenalized"
 lambda_rule = "lambda.min"
+unpenalize_B = TRUE
+est_tag = paste0("L", L, "_unpenB")
 
 total_start = Sys.time()
 
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(rdata_dir, paste0("FCIR_M_data_N", n, "_P", p, ".Rdata"))
-    est_filename = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", init_method, "_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(rdata_dir, paste0("FCIR_M_data_L", L, "_N", n, "_P", p, ".Rdata"))
+    est_filename = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", est_tag, "_", init_method, "_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
       print(paste("FCIR_M data not found, skipping:", data_filename))
@@ -73,17 +81,24 @@ for (n in Ns) {
     Y_slices = asplit(Y, 3)
     rm(Y)
 
-    ad_results = foreach(Y_b = Y_slices, .packages = "glmnet") %dopar% {
-      res = estimate_adaptive_lasso_FCIR_M(
-        Y = Y_b, X = X, Tr = Tr,
-        gamma = gamma_value, init = init_method,
-        lambda = lambda_rule, use_cv = TRUE, cv_group_by_site = TRUE
-      )
-      list(beta_0 = res$beta_0,
-           B_mat = res$B_mat,
-           Theta_int = res$Theta_int,
-           lambda = res$selected_lambda)
-    }
+    cl = start_cluster(n, p)
+    tryCatch({
+      ad_results = foreach(Y_b = Y_slices, .packages = "glmnet") %dopar% {
+        res = estimate_adaptive_lasso_FCIR_M(
+          Y = Y_b, X = X, Tr = Tr,
+          gamma = gamma_value, init = init_method,
+          lambda = lambda_rule, use_cv = TRUE, cv_group_by_site = TRUE,
+          unpenalize_B = unpenalize_B
+        )
+        list(beta_0 = res$beta_0,
+             B_mat = res$B_mat,
+             Theta_int = res$Theta_int,
+             lambda = res$selected_lambda)
+      }
+    }, finally = {
+      try(stopCluster(cl), silent = TRUE)
+      registerDoSEQ()
+    })
     rm(Y_slices)
 
     for (b in 1:B_reps) {
@@ -100,10 +115,10 @@ for (n in Ns) {
          beta_0, B_mat, Theta_int,
          N = n, P = p, L, K, B_reps, seed,
          penalty, alpha_value, gamma_value, init_method, lambda_rule, cv_type,
+         unpenalize_B,
          file = est_filename)
     print(paste("Saved:", est_filename))
   }
 }
 
-stopCluster(cl)
 print(paste("Total FCIR_M adaptive lasso execution time:", Sys.time() - total_start))

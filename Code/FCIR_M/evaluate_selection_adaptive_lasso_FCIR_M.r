@@ -7,6 +7,8 @@ if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10, 20)
+L = 1
+est_tag = paste0("L", L, "_unpenB")
 
 init_method = "unpenalized"
 tol = 1e-8
@@ -93,7 +95,7 @@ results = list()
 
 for (n in Ns) {
   for (p in Ps) {
-    f = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", init_method, "_N", n, "_P", p, ".Rdata"))
+    f = file.path(rdata_dir, paste0("New_FCIR_M_estimates_adaptive_lasso_", est_tag, "_", init_method, "_N", n, "_P", p, ".Rdata"))
     if (!file.exists(f)) {
       warning(paste("Missing:", f, "- run main_adaptive_lasso_FCIR_M.r first. Skipping."))
       next
@@ -132,9 +134,9 @@ if (length(results) == 0) stop("No FCIR_M adaptive lasso estimate files found.")
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
-out_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_", init_method, ".csv"))
+out_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_", est_tag, "_", init_method, ".csv"))
 write.csv(df, out_csv, row.names = FALSE)
 message("Saved FCIR_M selection summary table: ", out_csv)
 
@@ -144,12 +146,12 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
-selection_wide_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", init_method, ".csv"))
+selection_wide_csv = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", est_tag, "_", init_method, ".csv"))
 write.csv(selection_wide, selection_wide_csv, row.names = FALSE)
 
-selection_wide_txt = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", init_method, ".txt"))
+selection_wide_txt = file.path(out_dir, paste0("New_FCIR_M_adaptive_lasso_selection_wide_", est_tag, "_", init_method, ".txt"))
 writeLines(format_ascii_table(selection_wide), selection_wide_txt)
 
 message("FCIR_M adaptive lasso selection table:")

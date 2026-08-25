@@ -133,7 +133,7 @@ if (length(results) == 0) {
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
 out_csv = file.path(
   out_dir,
@@ -148,7 +148,7 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
 selection_wide_csv = file.path(
   out_dir,

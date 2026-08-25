@@ -6,7 +6,7 @@ library(dplyr)
 
 source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising_joint/ising_joint_config.r")
 
-est_tag_on_fcir_m = "_joint_on_FCIR_M"
+est_tag_on_fcir_m = "_joint_on_FCIR_M_L1"
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10, 20)
 
@@ -122,7 +122,7 @@ if (length(results) == 0) {
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
 out_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection",
                                     est_tag_on_fcir_m, "_",
@@ -136,7 +136,7 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
 selection_wide_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection_wide",
                                                est_tag_on_fcir_m, "_",
