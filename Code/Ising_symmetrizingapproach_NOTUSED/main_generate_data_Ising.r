@@ -1,4 +1,4 @@
-source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/ising_config.r")
 source(file.path(ising_code_dir, "generate_Ising.r"))
 
 if (!dir.exists(rdata_dir)) dir.create(rdata_dir, recursive = TRUE)

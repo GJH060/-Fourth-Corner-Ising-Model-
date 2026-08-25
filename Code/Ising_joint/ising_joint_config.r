@@ -1,7 +1,7 @@
 # Config for the joint upper-triangle Ising PL pipeline.
-# Reuses the same simulated data as Code/Ising (same setting_tag / grid).
+# Reuses the same simulated data as the symmetrizing approach (same setting_tag / grid).
 
-source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/ising_config.r")
 
 ising_joint_code_dir = file.path(project_root, "Code", "Ising_joint")
 # Estimates / tables live alongside the node-wise Ising outputs, with a _joint tag.

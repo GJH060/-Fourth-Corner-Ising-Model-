@@ -3,7 +3,7 @@
 # between generation, estimation and evaluation.
 
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
-ising_code_dir = file.path(project_root, "Code", "Ising")
+ising_code_dir = file.path(project_root, "Code", "Ising_symmetrizingapproach_NOTUSED")
 rdata_dir = file.path(project_root, "Simulation_Results", "Ising", "Rdata")
 table_dir = file.path(project_root, "Simulation_Results", "Ising", "tables")
 

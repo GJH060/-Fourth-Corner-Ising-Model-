@@ -1,4 +1,4 @@
-source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/ising_config.r")
 source(file.path(ising_code_dir, "estimate_Ising.r"))
 source(file.path(ising_code_dir, "estimate_adaptive_lasso_Ising.r"))
 

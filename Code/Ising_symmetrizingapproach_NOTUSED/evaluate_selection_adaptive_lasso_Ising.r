@@ -1,6 +1,6 @@
 library(dplyr)
 
-source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/ising_config.r")
 
 out_dir = table_dir
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
