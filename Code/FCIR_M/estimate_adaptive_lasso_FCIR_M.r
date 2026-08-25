@@ -8,7 +8,8 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
                                            lambda = "lambda.min",
                                            use_cv = TRUE,
                                            cv_group_by_site = TRUE,
-                                           custom_penalty_factor = 1) {
+                                           custom_penalty_factor = 1,
+                                           unpenalize_B = FALSE) {
   if (init != "unpenalized") {
     stop("Only init = 'unpenalized' is currently supported.")
   }
@@ -65,6 +66,12 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
   # term) is left unpenalized, mirroring how FCIR leaves beta_0[1] unpenalized.
   # Note this ends up not being used anyway due to the use of intercept = TRUE in glmnet, but we set it to 0 here for clarity.
   pen_factor[1] <- 0
+  if (unpenalize_B) {
+    # Leave vec(B) unpenalized so CV lambda is chosen only for Theta_int,
+    # matching Ising_joint (thresholds free, edges penalized).
+    b_idx <- (L + 1):(L + L * K)
+    pen_factor[b_idx] <- 0
+  }
 
   # Adaptive lasso on the manually standardized design (standardize = FALSE)
   if (use_cv) {
@@ -117,5 +124,6 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
        penalty_factor = pen_factor,
        selected_lambda = sel_lambda,
        gamma = gamma,
-       use_cv = use_cv)
+       use_cv = use_cv,
+       unpenalize_B = unpenalize_B)
 }

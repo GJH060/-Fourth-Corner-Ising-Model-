@@ -30,11 +30,10 @@ build_ising_pl_design_joint <- function(Y) {
       glm_Y[row_idx] = y_s[j]
       glm_X[row_idx, j] = 1
 
-      for (j_prime in 1:P) {
-        if (j_prime != j && y_s[j_prime] == 1) {
-          edge_idx = pair_idx_mat[j, j_prime]
-          glm_X[row_idx, P + edge_idx] = 1
-        }
+      present = which(y_s == 1)
+      present = present[present != j]
+      if (length(present) > 0) {
+        glm_X[row_idx, P + pair_idx_mat[j, present]] = 1
       }
       row_idx = row_idx + 1
     }
@@ -59,15 +58,12 @@ estimate_unpenalized_Ising_joint <- function(Y,
   if (standardize) {
     # Leave species-threshold columns unscaled; scale edge columns by SD only
     # (no centering), mirroring FCIR_I / FCIR_M.
-    for (k0 in (P + 1):(P + n_edges)) {
-      find_nonzeros = which(glm_X[, k0] != 0)
-      if (length(find_nonzeros) < 2) next
-      s_k = sd(glm_X[find_nonzeros, k0])
-      if (!is.finite(s_k) || s_k == 0) next
-      getsds[k0] = s_k
-      glm_X[find_nonzeros, k0] = glm_X[find_nonzeros, k0] / s_k
-      index_standardized_cols[k0] = 1
-    }
+    edge_idx = (P + 1):(P + n_edges)
+    valid_idx = edge_idx[is.finite(getsds[edge_idx]) & getsds[edge_idx] > 0]
+    scale_factors = rep(1, ncol(glm_X))
+    scale_factors[valid_idx] = getsds[valid_idx]
+    glm_X = sweep(glm_X, 2, scale_factors, "/")
+    index_standardized_cols[valid_idx] = 1
   }
 
   if (returnX_only) {

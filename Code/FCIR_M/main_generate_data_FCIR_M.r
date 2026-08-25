@@ -6,7 +6,7 @@ source(file.path(fcir_m_code_dir, "generate_FCIR_M.r"))
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10,20)
 
-L = 3
+L = 1
 K = 2
 B_reps = 1000
 seed = 2026
@@ -19,7 +19,7 @@ total_start = Sys.time()
 
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(rdata_dir, paste0("FCIR_M_data_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(rdata_dir, paste0("FCIR_M_data_L", L, "_N", n, "_P", p, ".Rdata"))
 
     if (!file.exists(data_filename)) {
       print(paste("Generating FCIR_M data ( N =", n, ", P =", p, ")..."))

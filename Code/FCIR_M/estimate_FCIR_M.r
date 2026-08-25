@@ -13,51 +13,27 @@ estimate_unpenalized_FCIR_M <- function(Y,
   K = ncol(Tr)
   n_edges = P * (P - 1) / 2
   
-  # 1. Pre-compute an Edge Index Matrix 
-  # This mapping matrix quickly retrieves the 1D index (1 to n_edges) for any pair (j, j')
-  pair_idx_mat = matrix(0, nrow = P, ncol = P)
-  pair_idx_mat[upper.tri(pair_idx_mat)] = 1:n_edges
-  pair_idx_mat[lower.tri(pair_idx_mat)] = t(pair_idx_mat)[lower.tri(pair_idx_mat)]
-  
-  # (No Delta computation needed for FCIR_M)
-  
-  # 2. Initialize design matrix for FCIR_M
-  n_obs = N * P
-  # Parameters: beta_0 (L), vec(B) (L*K), theta_int (n_edges)
-  n_params = L + L*K + n_edges      
-  
-  glm_Y = numeric(n_obs)
-  glm_X = matrix(0, nrow = n_obs, ncol = n_params)
-  
-  row_idx = 1
-  for(s in 1:N){
-    x_s = X[s, ]
-    y_s = Y[s, ]
-    
-    for(j in 1:P){
-      glm_Y[row_idx] = y_s[j]
-      
-      # --- Main Effects (Same as full model) ---
-      t_j = Tr[j, ]
-      comp1_beta0 = x_s
-      comp2_B     = kronecker(t_j, x_s)
-      
-      # --- MODIFICATION 2: Static Edge-Incidence Vector ---
-      # An indicator vector of length n_edges. Element is 1 if neighbor j' is present.
-      comp3_theta_int = numeric(n_edges)
-      for(j_prime in 1:P){
-        if(j_prime != j && y_s[j_prime] == 1){
-          edge_idx = pair_idx_mat[j, j_prime]
-          comp3_theta_int[edge_idx] = 1 # Activate the corresponding edge parameter
-        }
-      }
-      
-      # Concatenate blocks
-      glm_X[row_idx, ] = c(comp1_beta0, comp2_B, comp3_theta_int)
-      
-      row_idx = row_idx + 1
-    }
-  }
+  # Build the stacked pseudo-likelihood design without repeatedly assigning
+  # matrix subsets. This avoids an R 4.6 JIT/foreach locked-binding error.
+  edge_pairs = which(upper.tri(matrix(FALSE, P, P)), arr.ind = TRUE)
+  edge_i = edge_pairs[, 1]
+  edge_j = edge_pairs[, 2]
+
+  site_idx = rep(seq_len(N), each = P)
+  focal_idx = rep(seq_len(P), times = N)
+
+  glm_Y = as.numeric(t(Y))
+  comp1_beta0 = X[site_idx, , drop = FALSE]
+
+  trait_rows = Tr[focal_idx, , drop = FALSE]
+  comp2_B = trait_rows[, rep(seq_len(K), each = L), drop = FALSE] *
+    comp1_beta0[, rep(seq_len(L), times = K), drop = FALSE]
+
+  comp3_theta_int =
+    outer(focal_idx, edge_i, "==") * Y[site_idx, edge_j, drop = FALSE] +
+    outer(focal_idx, edge_j, "==") * Y[site_idx, edge_i, drop = FALSE]
+
+  glm_X = cbind(comp1_beta0, comp2_B, comp3_theta_int)
   
   getsds <- apply(glm_X, 2, sd)
   if (standardize) {

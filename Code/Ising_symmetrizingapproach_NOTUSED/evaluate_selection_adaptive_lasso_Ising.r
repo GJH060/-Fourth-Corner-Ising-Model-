@@ -1,6 +1,6 @@
 library(dplyr)
 
-source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/Ising/ising_config.r")
+source("F:/ising model thesis/-Fourth-Corner-Ising-Model-/Code/ising_config.r")
 
 out_dir = table_dir
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
@@ -121,7 +121,7 @@ if (length(results) == 0) stop("No Ising adaptive lasso estimate files found.")
 
 df = bind_rows(results) %>%
   select(Matrix, N, P, n_nonzero, n_total, Metric, Mean, SD) %>%
-  arrange(Matrix, N, P, Metric)
+  arrange(Matrix, P, N, Metric)
 
 out_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection", setting_tag,
                                     "_", init_method, ".csv"))
@@ -134,7 +134,7 @@ selection_wide = df %>%
                      names_from = Metric, values_from = Mean) %>%
   select(Matrix, N, P, n_nonzero, n_total,
          `no of correct zeros`, `no of correct non-zeros`, F1, RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
 selection_wide_csv = file.path(out_dir, paste0("Ising_adaptive_lasso_selection_wide",
                                                setting_tag, "_", init_method, ".csv"))

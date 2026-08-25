@@ -8,7 +8,8 @@ source(file.path(ising_joint_code_dir, "estimate_Ising_joint.r"))
 source(file.path(ising_joint_code_dir, "estimate_adaptive_lasso_Ising_joint.r"))
 
 fcir_m_rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "Rdata")
-est_tag_on_fcir_m = "_joint_on_FCIR_M"
+L = 1
+est_tag_on_fcir_m = paste0("_joint_on_FCIR_M_L", L)
 if (!dir.exists(rdata_dir)) dir.create(rdata_dir, recursive = TRUE)
 
 # Match the FCIR_M simulation grid (ising_config already uses the same Ns/Ps).
@@ -30,7 +31,7 @@ total_start = Sys.time()
 
 for (n in Ns) {
   for (p in Ps) {
-    data_filename = file.path(fcir_m_rdata_dir, paste0("FCIR_M_data_N", n, "_P", p, ".Rdata"))
+    data_filename = file.path(fcir_m_rdata_dir, paste0("FCIR_M_data_L", L, "_N", n, "_P", p, ".Rdata"))
     est_filename = file.path(
       rdata_dir, paste0("Ising_estimates_adaptive_lasso", est_tag_on_fcir_m, "_",
                         init_method_joint, "_N", n, "_P", p, ".Rdata")
@@ -43,8 +44,7 @@ for (n in Ns) {
 
     if (file.exists(est_filename)) {
       print(paste("Joint Ising-on-FCIR_M estimates already exist for N =",
-                  n, ", P =", p, "- Skipping."))
-      next
+                  n, ", P =", p, "- Overwriting."))
     }
 
     print(paste("Loading FCIR_M data for joint Ising ( N =", n, ", P =", p, ")..."))

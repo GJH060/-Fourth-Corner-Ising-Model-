@@ -6,6 +6,11 @@ project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 # Must match the setting used in main_unpenalized_FCIR_I.r.
 use_sparse_beta = TRUE
 
+# Estimates fitted on the rescaled data carry a "Rescale_" prefix; the same
+# prefix goes on the tables and plots so the earlier non-rescaled output is
+# left intact. Set to "" to analyse the original estimates instead.
+est_prefix = "Rescale_"
+
 if (use_sparse_beta) {
   rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_I", "Rdata_Sparse_Beta")
   est_tag = "unpenalized_sparse_Beta"
@@ -80,7 +85,8 @@ for (n in Ns) {
   for (p in Ps) {
     filename = file.path(
       rdata_dir,
-      paste0("FCIR_I_estimates_", est_tag, "_N", n, "_P", p, ".Rdata")
+      paste0(est_prefix, "FCIR_I_estimates_", est_tag,
+             "_N", n, "_P", p, ".Rdata")
     )
 
     if (!file.exists(filename)) {
@@ -157,23 +163,23 @@ summary_df = rmse_df %>%
 
 summary_csv = file.path(
   table_dir,
-  paste0("FCIR_I_", est_tag, "_RMSE_summary.csv")
+  paste0(est_prefix, "FCIR_I_", est_tag, "_RMSE_summary.csv")
 )
 write.csv(summary_df, summary_csv, row.names = FALSE)
 
 rmse_wide = summary_df %>%
   select(Matrix, N, P, n_nonzero, n_total, Mean_RMSE, SD_RMSE) %>%
-  arrange(Matrix, N, P)
+  arrange(Matrix, P, N)
 
 rmse_wide_csv = file.path(
   table_dir,
-  paste0("FCIR_I_", est_tag, "_RMSE_wide.csv")
+  paste0(est_prefix, "FCIR_I_", est_tag, "_RMSE_wide.csv")
 )
 write.csv(rmse_wide, rmse_wide_csv, row.names = FALSE)
 
 rmse_wide_txt = file.path(
   table_dir,
-  paste0("FCIR_I_", est_tag, "_RMSE_wide.txt")
+  paste0(est_prefix, "FCIR_I_", est_tag, "_RMSE_wide.txt")
 )
 writeLines(format_ascii_table(rmse_wide), rmse_wide_txt)
 
@@ -206,7 +212,7 @@ plot_obj = ggplot(rmse_plot_df, aes(x = N, y = RMSE)) +
 
 plot_file = file.path(
   plot_dir,
-  paste0("FCIR_I_", est_tag, "_RMSE_convergence.png")
+  paste0(est_prefix, "FCIR_I_", est_tag, "_RMSE_convergence.png")
 )
 ggsave(plot_file, plot_obj, width = 11, height = 9, dpi = 300)
 
@@ -245,7 +251,7 @@ beta_scatter_plot = ggplot(
 
 beta_scatter_file = file.path(
   plot_dir,
-  paste0("FCIR_I_", est_tag, "_max_abs_Beta_vs_RMSE.png")
+  paste0(est_prefix, "FCIR_I_", est_tag, "_max_abs_Beta_vs_RMSE.png")
 )
 ggsave(beta_scatter_file, beta_scatter_plot,
        width = 9, height = 12, dpi = 300)

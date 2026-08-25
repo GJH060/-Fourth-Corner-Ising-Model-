@@ -7,10 +7,9 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   
   set.seed(seed)
   
-  # Main Effect Parameters (same scale as FCIR / FCIR_I; only B_mat is sparse).
+  # Main Effect Parameters (same scale as FCIR / FCIR_I; B_mat is dense).
   beta_0 = runif(L, -1, 1)
   B_mat = matrix(runif(L * K, -1, 1), nrow = L, ncol = K)
-  B_mat[order(abs(B_mat))[1:3]] = 0
   
   # --- MODIFICATION 1: Static Residual Interaction Network ---
   # Theta_int: P x P symmetric matrix independent of environment and traits.

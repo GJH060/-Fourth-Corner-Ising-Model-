@@ -10,24 +10,24 @@ project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
 
 ising_joint_csv = file.path(
   project_root, "Simulation_Results", "Ising", "tables",
-  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_unpenalized.csv"
+  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_L1_unpenalized.csv"
 )
 ising_joint_txt = file.path(
   project_root, "Simulation_Results", "Ising", "tables",
-  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_unpenalized.txt"
+  "Ising_adaptive_lasso_selection_wide_joint_on_FCIR_M_L1_unpenalized.txt"
 )
 fcir_m_csv = file.path(
   project_root, "Simulation_Results", "FCIR_M", "tables",
-  "New_FCIR_M_adaptive_lasso_selection_wide_unpenalized.csv"
+  "New_FCIR_M_adaptive_lasso_selection_wide_L1_unpenB_unpenalized.csv"
 )
 fcir_m_txt = file.path(
   project_root, "Simulation_Results", "FCIR_M", "tables",
-  "New_FCIR_M_adaptive_lasso_selection_wide_unpenalized.txt"
+  "New_FCIR_M_adaptive_lasso_selection_wide_L1_unpenB_unpenalized.txt"
 )
 
 out_dir = file.path(
   project_root, "Simulation_Results", "comparison_plots",
-  "Ising_joint_on_FCIR_M_Theta_vs_FCIR_M_Theta_int"
+  "Ising_joint_on_FCIR_M_L1_Theta_vs_FCIR_M_Theta_int_unpenB"
 )
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
@@ -122,7 +122,7 @@ plot_main = metric_long %>%
   scale_x_continuous(trans = "log2", breaks = sort(unique(cmp$N))) +
   facet_grid(Metric ~ P_lab, scales = "free_y") +
   labs(
-    title = "Ising_joint Theta vs FCIR_M Theta_int (same FCIR_M data, adaptive lasso)",
+    title = "Ising_joint Theta vs FCIR_M Theta_int (L=1 data; FCIR_M unpenalized B)",
     x = "N (log2 scale)",
     y = NULL,
     colour = NULL,
@@ -142,7 +142,7 @@ plot_rates = metric_long %>%
   scale_x_continuous(trans = "log2", breaks = sort(unique(cmp$N))) +
   facet_grid(Metric ~ P_lab, scales = "free_y") +
   labs(
-    title = "Ising_joint Theta vs FCIR_M Theta_int (same FCIR_M data; rates + F1 + RMSE)",
+    title = "Ising_joint Theta vs FCIR_M Theta_int (L=1 data; FCIR_M unpenalized B; rates)",
     x = "N (log2 scale)",
     y = NULL,
     colour = NULL,
