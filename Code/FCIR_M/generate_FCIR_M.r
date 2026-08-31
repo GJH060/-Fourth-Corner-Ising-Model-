@@ -16,7 +16,7 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   Theta_int = matrix(0, nrow = P, ncol = P)
   n_edges = P * (P - 1) / 2
   sel_nonzeros <- sample(1:n_edges, size = floor(n_edges / 3), replace = FALSE)
-  Theta_int[upper.tri(Theta_int)][sel_nonzeros] = sample(c(-0.25, 0.25), size = length(sel_nonzeros), replace = TRUE)
+  Theta_int[upper.tri(Theta_int)][sel_nonzeros] = sample(c(-1, 1), size = length(sel_nonzeros), replace = TRUE)
   Theta_int[lower.tri(Theta_int)] = t(Theta_int)[lower.tri(Theta_int)]
   
   Y = array(data = NA, dim = c(N, P, B_reps))
