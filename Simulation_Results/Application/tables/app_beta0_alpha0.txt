@@ -1,0 +1,20 @@
++--------+---------+------------+----------+----------+--------------+-----------------+
+| model  | block   | env        | estimate | selected | identified   | reference_group |
++--------+---------+------------+----------+----------+--------------+-----------------+
+| FCIR   | alpha_0 | (const)    | 0.0554   | TRUE     | yes          |                 |
+| FCIR   | alpha_0 | salinity   | 0.0122   | TRUE     | yes          |                 |
+| FCIR   | alpha_0 | water_temp | -0.0429  | TRUE     | yes          |                 |
+| FCIR   | alpha_0 | PAR        | -0.0103  | TRUE     | yes          |                 |
+| FCIR   | beta_0  | (const)    | -2.8704  | TRUE     | joint with B | Pteropod        |
+| FCIR   | beta_0  | salinity   | -0.1542  | TRUE     | joint with B | Pteropod        |
+| FCIR   | beta_0  | water_temp | 0.1609   | TRUE     | joint with B | Pteropod        |
+| FCIR   | beta_0  | PAR        | -0.3851  | TRUE     | joint with B | Pteropod        |
+| FCIR_I | alpha_0 | (const)    | 0.3618   | TRUE     | yes          |                 |
+| FCIR_I | alpha_0 | salinity   | 0.0136   | TRUE     | yes          |                 |
+| FCIR_I | alpha_0 | water_temp | -0.0316  | TRUE     | yes          |                 |
+| FCIR_I | alpha_0 | PAR        | 0.0334   | TRUE     | yes          |                 |
+| FCIR_M | beta_0  | (const)    | -3.1863  | TRUE     | joint with B | Pteropod        |
+| FCIR_M | beta_0  | salinity   | -0.1495  | TRUE     | joint with B | Pteropod        |
+| FCIR_M | beta_0  | water_temp | 0.2650   | TRUE     | joint with B | Pteropod        |
+| FCIR_M | beta_0  | PAR        | -0.3118  | TRUE     | joint with B | Pteropod        |
++--------+---------+------------+----------+----------+--------------+-----------------+
