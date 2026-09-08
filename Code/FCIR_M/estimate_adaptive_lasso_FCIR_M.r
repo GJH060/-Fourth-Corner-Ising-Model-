@@ -9,7 +9,8 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
                                            use_cv = TRUE,
                                            cv_group_by_site = TRUE,
                                            custom_penalty_factor = 1,
-                                           unpenalize_B = FALSE) {
+                                           unpenalize_B = FALSE,
+                                           sparse = FALSE) {
   if (init != "unpenalized") {
     stop("Only init = 'unpenalized' is currently supported.")
   }
@@ -40,12 +41,18 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
   # constant ones column). Columns are scaled by SD but NOT centered, the
   # constant intercept column is left unscaled (SD = 0), and it is fit with
   # intercept = FALSE so beta_0[1] is recovered as an unpenalized coefficient.
-  init_fit <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, standardize = FALSE)
+  init_fit <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, standardize = FALSE,
+                                          sparse = sparse)
   getsds <- init_fit$getsds
   scale_sds <- getsds
   scale_sds[scale_sds == 0] <- 1   # do not scale constant columns (e.g. intercept)
-  Xdes_raw <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, returnX_only = TRUE)
-  Xdes <- sweep(Xdes_raw, 2, scale_sds, "/")   # standardized design (SD scaling only)
+  Xdes_raw <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, returnX_only = TRUE,
+                                          sparse = sparse)
+  # sweep() would densify a dgCMatrix; right-multiplying by a diagonal matrix
+  # scales the columns in place and keeps the design sparse. glmnet takes a
+  # dgCMatrix directly, which is what makes the full-sample fit feasible.
+  Xdes <- if (sparse) Xdes_raw %*% Matrix::Diagonal(x = 1 / scale_sds)
+          else sweep(Xdes_raw, 2, scale_sds, "/")
   glm_Y <- as.numeric(init_fit$glm_model$y)
 
   # Initial estimator on the standardized scale for the adaptive weights:
