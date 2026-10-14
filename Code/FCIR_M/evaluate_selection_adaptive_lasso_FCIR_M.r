@@ -1,14 +1,18 @@
 library(dplyr)
 
-project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+project_root = Sys.getenv("FCIR_PROJECT_ROOT",
+                          unset = "D:/ising model thesis/-Fourth-Corner-Ising-Model-")
 rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "Rdata")
 out_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "tables")
 if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10, 20)
-L = 1
-est_tag = paste0("L", L, "_unpenB")
+# Must match the settings in main_adaptive_lasso_FCIR_M.r. L = 3 with
+# unpenalize_B = FALSE is the thesis setting (Section 4.3).
+L = 3
+unpenalize_B = FALSE
+est_tag = paste0("L", L, if (unpenalize_B) "_unpenB" else "")
 
 init_method = "unpenalized"
 tol = 1e-8

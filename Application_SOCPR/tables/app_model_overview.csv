@@ -1,0 +1,4 @@
+"model","main_effect","interaction","n_params","n_nonzero","lambda_min","glm_aliased","elapsed_s","quasi_separation","pct_nonzero"
+"FCIR","fourth-corner B","fourth-corner A",72,51,0.679296830361425,4,421.1,FALSE,70.8
+"FCIR_I","free beta_j (P x L)","fourth-corner A",156,131,0.000120126562217355,0,1965.6,TRUE,84
+"FCIR_M","fourth-corner B","free Theta_int (435 edges)",471,354,0.14417507980408,4,2030.7,TRUE,75.2

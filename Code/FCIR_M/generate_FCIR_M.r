@@ -1,6 +1,9 @@
 library(IsingSampler)
 
-generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
+generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename,
+                                 sparse_B = FALSE, edge_magnitude = 1){
+  # sparse_B = TRUE, edge_magnitude = 0.25 reproduces the L = 3 design reported
+  # in the thesis (three smallest |B| set to zero, edges +/-0.25).
   # Restricted Model: FCIR_M
   # Traits and environment drive the main effects only.
   # Interaction network is simplified to static, site-independent residual associations.
@@ -10,13 +13,14 @@ generate_fcir_M_data <- function(N, P, L, K, B_reps, seed, filename){
   # Main Effect Parameters (same scale as FCIR / FCIR_I; B_mat is dense).
   beta_0 = runif(L, -1, 1)
   B_mat = matrix(runif(L * K, -1, 1), nrow = L, ncol = K)
-  
+  if (sparse_B) B_mat[order(abs(B_mat))[1:3]] = 0
+
   # --- MODIFICATION 1: Static Residual Interaction Network ---
   # Theta_int: P x P symmetric matrix independent of environment and traits.
   Theta_int = matrix(0, nrow = P, ncol = P)
   n_edges = P * (P - 1) / 2
   sel_nonzeros <- sample(1:n_edges, size = floor(n_edges / 3), replace = FALSE)
-  Theta_int[upper.tri(Theta_int)][sel_nonzeros] = sample(c(-1, 1), size = length(sel_nonzeros), replace = TRUE)
+  Theta_int[upper.tri(Theta_int)][sel_nonzeros] = sample(c(-edge_magnitude, edge_magnitude), size = length(sel_nonzeros), replace = TRUE)
   Theta_int[lower.tri(Theta_int)] = t(Theta_int)[lower.tri(Theta_int)]
   
   Y = array(data = NA, dim = c(N, P, B_reps))

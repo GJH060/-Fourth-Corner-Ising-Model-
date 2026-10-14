@@ -1,75 +1,147 @@
-# Fourth Corner Ising Regression Model
+# Fourth-Corner Ising Regression Model
 
-Simulation code for the **Fourth-Corner Ising Regression (FCIR)** model — a
-site-varying Ising model whose main effects `theta_{s,jj}` and pairwise
-interactions `theta_{s,jj'}` are driven by environmental covariates `x_s` and
-species traits `t_j` (see `report.tex` for the full methodology). Models are
-fit by **maximum pseudo-likelihood** (a large logistic regression via
-`glmnet`).
+Code accompanying the thesis *A fourth-corner Ising regression model*. The
+fourth-corner Ising regression (FCIR) model is a site-varying Ising model whose
+main effects `theta_{s,jj}` and pairwise interactions `theta_{s,jj'}` are driven
+by environmental covariates `x_s` and species traits `t_j`. The thesis also
+studies two special cases:
+
+- **FCIR_I**: traits enter only through the pairwise interactions.
+- **FCIR_M**: traits enter only through the main effects.
+
+All three models are fitted by adaptive lasso penalised maximum pseudo-likelihood,
+written as a single stacked logistic regression and fitted with `glmnet`.
+
+## Requirements
+
+- R (>= 4.6), with the packages `glmnet`, `foreach`, `doParallel`,
+  `IsingSampler`, `Matrix` and `dplyr`. The estimator comparison figures
+  also need `ggplot2` and `patchwork`.
+- Windows PowerShell, for the `*.ps1` scripts that draw the Chapter 4
+  selection figures (they use `System.Drawing`).
+
+```r
+install.packages(c("glmnet", "foreach", "doParallel", "IsingSampler",
+                   "Matrix", "dplyr", "ggplot2", "patchwork"))
+```
+
+**Paths.** Most scripts set `project_root` to an absolute path on their first
+line; change it to the location of your clone before running. The FCIR_M
+scripts read the environment variable `FCIR_PROJECT_ROOT` instead.
+
+## Data
+
+- **Simulated data** are not stored in the repository (`*.Rdata` is
+  git-ignored). The `main_generate_data*` scripts below regenerate them
+  exactly, since every configuration uses `seed = 2026`.
+- **SOCPR data** (Chapter 5) come from the Southern Ocean Continuous Plankton
+  Recorder Zooplankton Records, Australian Antarctic Data Centre,
+  <https://doi.org/10.26179/5ee84f77cc4ec>. The processed subset used in the
+  thesis is `Application/reduceddat.RData`, which contains the response matrix,
+  the environmental covariates and the functional-group indicator matrix.
+
+**Reproducibility.** Cross-validation folds are assigned at random. The FCIR_M
+script sets a seed for each replicate, but the FCIR and FCIR_I scripts do not,
+so rerunning those gives Monte Carlo averages that differ slightly from the
+thesis.
 
 ## Repository layout
 
 ```
-Code/FCIR/              R source (data generation, estimation, analysis, plots)
+Application/            processed SOCPR data (input to Chapter 5)
+Code/
+  FCIR/                 full FCIR model: data generation, estimation, evaluation
+  FCIR_I/               FCIR_I special case
+  FCIR_M/               FCIR_M special case
+  Application/          Chapter 5 model fits, figures and tables
+  *.r                   estimator comparisons shared across the three models
 Simulation_Results/
-  Rdata_Sparse/         simulated data + estimates, sparse-truth scenario   (git-ignored)
-  Rdata_Dense/          simulated data + estimates, fully-dense scenario     (git-ignored)
-  plots/                all generated figures
-  warnings/             GLM fit warning logs                                 (git-ignored)
-report.tex              manuscript (model definition and notation)
+  FCIR/, FCIR_I/, FCIR_M/, Application/
+    Rdata*/             simulated data and estimates (git-ignored)
+    tables/             summary tables (CSV, and ASCII .txt)
+    plots/              figures
+  comparison_tables.tex LaTeX bodies of the estimator comparison tables
 ```
 
-`.Rdata` outputs are large binaries and are **git-ignored**; regenerate them by
-running the `main` scripts below.
+## Thesis figures and the scripts that produce them
 
-## Code/FCIR scripts
+Each pipeline runs left to right: generate data, fit, summarise into a table,
+then draw the figure. All paths are relative to the repository root.
 
-### Data generation
+### Chapter 4: simulation study
+
+| Thesis figure | Figure file (`Simulation_Results/...`) | Plotting script | Input table | Upstream scripts |
+|---|---|---|---|---|
+| Fig. 4.1, FCIR selection and RMSE | `FCIR/plots/FCIR_sparse_selection_metrics.png`, `FCIR/plots/FCIR_dense_RMSE.png` | `Code/FCIR/plot_FCIR_simulation_results.ps1` | `FCIR/tables/adaptive_lasso_selection_wide_unpenalized_Sparse.csv`, `FCIR/tables/adaptive_lasso_dense_diagnostics_wide_unpenalized_Sparse.csv` | `Code/FCIR/main_generate_data.r` → `Code/FCIR/main_adaptive_lasso.r` → `Code/FCIR/evaluate_selection_adaptive_lasso.r` |
+| Fig. 4.2, adaptive vs ordinary lasso selection | `FCIR/plots/FCIR_lasso_vs_adaptive_selection.png` | `Code/plot_estimator_comparison.r` | `FCIR/tables/lasso_selection_wide.csv` | `Code/FCIR/main_lasso_and_unpenalized.r` → `Code/compare_estimators_RMSE.r` |
+| Fig. 4.3, FCIR RMSE of three estimators | `FCIR/plots/FCIR_RMSE_estimator_comparison.png` | `Code/plot_estimator_comparison.r` | `FCIR/tables/estimator_RMSE_comparison.csv` | `Code/FCIR/main_lasso_and_unpenalized.r` → `Code/compare_estimators_RMSE.r` |
+| Fig. 4.4, FCIR_I selection and RMSE | `FCIR_I/plots/FCIR_I_sparse_selection_metrics.png` | `Code/FCIR_I/plot_FCIR_I_simulation_results.ps1` | `FCIR_I/tables/Rescale_FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_unpenalized.csv` | `Code/FCIR_I/main_generate_data_FCIR_I.r` (`use_sparse_beta = TRUE`) → `Code/FCIR_I/main_adaptive_lasso_sparse_Beta_FCIR_I.r` → `Code/FCIR_I/evaluate_selection_adaptive_lasso_sparse_Beta_FCIR_I.r` |
+| Fig. 4.5, FCIR_I adaptive lasso vs unpenalised | `FCIR_I/plots/FCIR_I_RMSE_estimator_comparison.png` | `Code/plot_estimator_comparison.r` | `FCIR_I/tables/estimator_RMSE_comparison.csv` | `Code/FCIR_I/main_unpenalized_FCIR_I.r` → `Code/compare_estimators_RMSE.r` |
+| Fig. 4.6, FCIR_M selection for `Theta` and RMSE | `FCIR_M/plots/FCIR_M_Theta_selection_metrics.png`, `FCIR_M/plots/FCIR_M_main_effect_RMSE.png` | `Code/FCIR_M/plot_FCIR_M_simulation_results.ps1` | `FCIR_M/tables/New_FCIR_M_adaptive_lasso_selection_wide_unpenalized.csv` | `Code/FCIR_M/main_generate_data_FCIR_M_L3.r` → `Code/FCIR_M/main_adaptive_lasso_FCIR_M.r` → `Code/FCIR_M/evaluate_selection_adaptive_lasso_FCIR_M.r` |
+| Fig. 4.7, FCIR_M adaptive lasso vs unpenalised | `FCIR_M/plots/FCIR_M_RMSE_estimator_comparison.png` | `Code/plot_estimator_comparison.r` | `FCIR_M/tables/estimator_RMSE_comparison.csv` | `Code/FCIR_M/main_unpenalized_FCIR_M_L3.r` → `Code/compare_estimators_RMSE.r` |
+
+Simulation settings: `N` in {50, 100, 200, 400, 800}, `L = 3`, `K = 2`,
+1000 replicates per configuration, `seed = 2026`. `P` is {30, 60} for FCIR and
+FCIR_I, and {10, 20} for FCIR_M.
+
+**Note on FCIR_M.** The thesis uses `L = 3` with all non-intercept coefficients,
+including `B`, penalised. `Code/FCIR_M/main_adaptive_lasso_FCIR_M.r` and
+`evaluate_selection_adaptive_lasso_FCIR_M.r` are set to this configuration
+(`L = 3`, `unpenalize_B = FALSE`). They write files tagged `L3`, for example
+`New_FCIR_M_adaptive_lasso_selection_wide_L3_unpenalized.csv`. The untagged
+table listed above holds the results reported in the thesis. A rerun of the
+`L3` pipeline reproduces them up to Monte Carlo error in the cross-validation
+folds. The `L = 1` / `unpenalize_B = TRUE` setting is a separate experiment
+that is not reported in the thesis.
+
+### Chapter 5: application to the SOCPR data
+
+| Thesis figure | Figure file (`Simulation_Results/Application/plots/...`) |
+|---|---|
+| Fig. 5.1, `B` under FCIR and FCIR_M | `app_B_fourth_corner.png` |
+| Fig. 5.2, `A` under FCIR and FCIR_I | `app_A_fourth_corner.png` |
+| Fig. 5.3, FCIR_I species-specific intercepts | `app_FCIR_I_Beta_intercepts.png` |
+| Fig. 5.4, FCIR_I species-specific slopes | `app_FCIR_I_Beta.png` |
+| Fig. 5.5, FCIR_M `Theta` heatmap | `app_FCIR_M_Theta_heatmap.png` |
+
+Pipeline:
+
+1. `Code/Application/main_adaptive_lasso_FCIR.r`,
+   `main_adaptive_lasso_FCIR_I.r` and `main_adaptive_lasso_FCIR_M.r` fit the three
+   models to `Application/reduceddat.RData`.
+2. They save the fits to `Simulation_Results/Application/Rdata/`.
+3. `Code/Application/analyze_app_results.r` produces all Chapter 5 figures and
+   tables.
+4. Optionally, `Code/Application/format_app_tables.r` writes ASCII versions of
+   the tables.
+
+## Thesis tables and their source files
+
+| Thesis table | Source file (`Simulation_Results/...`) |
+|---|---|
+| Table 5.1, model overview | `Application/tables/app_model_overview.csv` |
+| Table 5.2, `beta_0` and `alpha_0` estimates | `Application/tables/app_beta0_alpha0.csv` |
+| Table 5.3, `Theta` within vs across groups | `Application/tables/app_Theta_same_vs_cross_group.csv` |
+| Appendix: FCIR adaptive lasso selection (`B`, `A`) | `FCIR/tables/adaptive_lasso_selection_wide_unpenalized_Sparse.csv` |
+| Appendix: FCIR RMSE of `beta_0`, `alpha_0` | `FCIR/tables/adaptive_lasso_dense_diagnostics_wide_unpenalized_Sparse.csv` |
+| Appendix: FCIR ordinary lasso selection | `FCIR/tables/lasso_selection_wide.csv` |
+| Appendix: FCIR_I selection | `FCIR_I/tables/Rescale_FCIR_I_adaptive_lasso_selection_wide_sparse_Beta_unpenalized.csv` |
+| Appendix: FCIR_M selection and RMSE | `FCIR_M/tables/New_FCIR_M_adaptive_lasso_selection_wide_unpenalized.csv` |
+| Appendix: estimator RMSE comparisons (all three models) | `{FCIR,FCIR_I,FCIR_M}/tables/estimator_RMSE_comparison.csv`, typeset into `comparison_tables.tex` by `Code/format_comparison_tables.r` |
+
+## Core functions
+
 | File | Purpose |
-|------|---------|
-| `generate_FCIR.r` | Generate **sparse-truth** FCIR data via Ising MCMC (`IsingSampler`). `B`/`A` have a fraction of true zeros (`prob_zero`). |
-| `generate_without_sparsity.r` | Generate **fully-dense** FCIR data — all of `beta_0, B, alpha_0, A` are non-zero. |
+|---|---|
+| `Code/FCIR/generate_FCIR.r`, `Code/FCIR_I/generate_sparse_Beta_FCIR_I.r`, `Code/FCIR_M/generate_FCIR_M.r` | Simulate presence-absence data from each model with `IsingSampler` |
+| `Code/FCIR/estimate_FCIR.r`, `Code/FCIR_I/estimate_FCIR_I.r`, `Code/FCIR_M/estimate_FCIR_M.r` | Build the stacked pseudo-likelihood model matrix and fit the unpenalised estimator |
+| `Code/FCIR/estimate_adaptive_lasso_FCIR.r`, `Code/FCIR_I/estimate_adaptive_lasso_FCIR_I.r`, `Code/FCIR_M/estimate_adaptive_lasso_FCIR_M.r` | Standardise the model matrix, build the adaptive weights, choose `lambda` by site-grouped cross-validation (`cv.glmnet`) and back-transform the estimates |
 
-### Estimation
-| File | Purpose |
-|------|---------|
-| `estimate_FCIR.r` | `estimate_unpenalized_FCIR()` — unpenalized MPLE (plain logistic regression on the pseudo-likelihood design). |
-| `estimate_penalized_FCIR.r` | `estimate_penalized_FCIR()` — penalized MPLE via `glmnet` (ridge/lasso/elastic-net; fixed `lambda` or `cv.glmnet`; supports **site-grouped CV folds** so all `P` rows of a site stay in one fold). |
+## Other scripts
 
-### Simulation drivers
-| File | Purpose |
-|------|---------|
-| `main.r` | **Sparse** scenario sweep over `N x P`. For each cell: generate data, run unpenalized MPLE, fixed-`lambda` ridge (with `lambda` scaled by `1/sqrt(N*P)`), and site-grouped CV ridge. Writes to `Rdata_Sparse/`. |
-| `main_without_sparsity.r` | Same pipeline for the **dense** scenario. Writes to `Rdata_Dense/`. |
+The following are exploratory and not used for any result in the thesis:
 
-### Analysis & convergence plots
-| File | Purpose |
-|------|---------|
-| `analyze.R` / `analyze_without_sparsity.r` | General per-parameter error summaries/boxplots (sparse / dense). |
-| `convergence_plot.R` | Per-parameter convergence vs `N` — unpenalized, sparse. |
-| `convergence_without_sparsity.R` | Per-parameter convergence vs `N` — dense. |
-| `convergence_ridge_plot.R` | Per-parameter convergence — fixed-`lambda` ridge, sparse. |
-| `convergence_ridge_cv_plot.R` | Per-parameter convergence — CV ridge (random folds), sparse. |
-| `convergence_ridge_cv_compare.R` | Compare **random vs site-grouped** CV folds per parameter, sparse. |
-| `convergence_ridge_cv_grouped_dense.R` | Per-parameter convergence — site-grouped CV ridge, **dense**. |
-| `convergence_theta.R` | Convergence (per-replicate **RMSE**) of the derived potentials `theta_{s,jj}` (main) and `theta_{s,jj'}` (interaction), across all methods and both scenarios. `theta` stays identifiable even when individual params (e.g. `A` in dense) are not. |
-| `theta_edge_mean_error.R` | Mean **signed** error of the interaction edge potentials `theta_{s,jj'}` (boxplot + Monte-Carlo line summary). |
-
-### Diagnostics
-| File | Purpose |
-|------|---------|
-| `check_multicollinearity.R` | VIF / correlation structure of the pseudo-likelihood design matrix. |
-| `check_sparsity_sparse.R` / `check_sparsity_dense.R` | Response presence-rate / richness diagnostics for each scenario. |
-| `check_unpenalized_warnings.R` | Re-run unpenalized fits to capture GLM convergence warnings into `Simulation_Results/warnings/` (does not overwrite estimates). |
-
-## Reproducing
-
-```r
-# from the project root, in R
-source("Code/FCIR/main.r")                 # sparse scenario  -> Rdata_Sparse/
-source("Code/FCIR/main_without_sparsity.r")# dense scenario   -> Rdata_Dense/
-source("Code/FCIR/convergence_theta.R")    # figures          -> Simulation_Results/plots/
-```
-
-Global grid: `N in {50,100,200,400,800}`, `P in {30,60}`, `L=3`, `K=2`,
-`B_reps=1000`, `seed=42`.
+- In `Code/FCIR/`: `main.r`, `main_without_sparsity.r`, the `convergence_*`
+  scripts, the `*_fixedN*` scripts and the `*_weaken_alpha0_and_Amat*` scripts.
+- The folders `Code/Ising_joint/` and `Code/Ising_symmetrizingapproach_NOTUSED/`.
+- The `toyexample*.R` scripts at the repository root.

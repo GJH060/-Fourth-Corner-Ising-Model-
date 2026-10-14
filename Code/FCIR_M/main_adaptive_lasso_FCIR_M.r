@@ -1,4 +1,12 @@
-project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+# Adaptive lasso fits for the FCIR_M simulation reported in the thesis (Section 4.3):
+# L = 3, K = 2, P in {10, 20}, sparse B and residual edges of +/-0.25, with all
+# non-intercept coefficients (including B) penalised. Data come from
+# main_generate_data_FCIR_M_L3.r.
+#
+# Set the environment variable FCIR_PROJECT_ROOT to the repository root if it
+# differs from the default below.
+project_root = Sys.getenv("FCIR_PROJECT_ROOT",
+                          unset = "D:/ising model thesis/-Fourth-Corner-Ising-Model-")
 fcir_m_code_dir = file.path(project_root, "Code", "FCIR_M")
 rdata_dir = file.path(project_root, "Simulation_Results", "FCIR_M", "Rdata")
 
@@ -25,7 +33,7 @@ start_cluster = function(n, p) {
 Ns = c(50, 100, 200, 400, 800)
 Ps = c(10, 20)
 
-L = 1
+L = 3
 K = 2
 B_reps = 1000
 seed = 2026
@@ -33,8 +41,15 @@ seed = 2026
 gamma_value = 1
 init_method = "unpenalized"
 lambda_rule = "lambda.min"
-unpenalize_B = TRUE
-est_tag = paste0("L", L, "_unpenB")
+# FALSE reproduces the thesis (B penalised). TRUE gives the separate
+# unpenalised-B experiment used for the Ising_joint comparison.
+unpenalize_B = FALSE
+est_tag = paste0("L", L, if (unpenalize_B) "_unpenB" else "")
+
+# Optional: restrict the run to a subset of configurations, e.g.
+#   FCIR_M_NS="800" FCIR_M_PS="10" Rscript main_adaptive_lasso_FCIR_M.r
+if (nzchar(Sys.getenv("FCIR_M_NS"))) Ns = as.numeric(strsplit(Sys.getenv("FCIR_M_NS"), ",")[[1]])
+if (nzchar(Sys.getenv("FCIR_M_PS"))) Ps = as.numeric(strsplit(Sys.getenv("FCIR_M_PS"), ",")[[1]])
 
 total_start = Sys.time()
 
@@ -83,7 +98,11 @@ for (n in Ns) {
 
     cl = start_cluster(n, p)
     tryCatch({
-      ad_results = foreach(Y_b = Y_slices, .packages = "glmnet") %dopar% {
+      ad_results = foreach(b = seq_along(Y_slices), Y_b = Y_slices,
+                           .packages = "glmnet") %dopar% {
+        # Per-replicate seed so the random site-to-fold assignment used in
+        # cross-validation is reproducible.
+        set.seed(seed + b)
         res = estimate_adaptive_lasso_FCIR_M(
           Y = Y_b, X = X, Tr = Tr,
           gamma = gamma_value, init = init_method,

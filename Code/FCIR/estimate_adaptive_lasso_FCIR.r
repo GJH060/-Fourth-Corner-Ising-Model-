@@ -5,7 +5,11 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
                                          lambda = "lambda.min",
                                          use_cv = TRUE,
                                          cv_group_by_site = TRUE,
-                                         custom_penalty_factor = 1) {
+                                         custom_penalty_factor = 1,
+                                         adaptive = TRUE) {
+    # adaptive = FALSE gives the ordinary lasso: every penalized coefficient gets
+    # weight 1 instead of 1 / |unpenalized estimate|^gamma. Everything else
+    # (standardization, site-grouped CV, back-transformation) is unchanged.
     if (init != "unpenalized") {
         stop("Only init = 'unpenalized' is currently supported.")
         }
@@ -46,7 +50,7 @@ estimate_adaptive_lasso_FCIR <- function(Y, X, Tr,
     # Adaptive-lasso penalty weights for all non-intercept coefficients, optionally rescaled per-coefficient by custom_penalty_factor
     # (layout: beta_0[2:L] | vec(B) | alpha_0 | vec(A); default 1 = no change).
     eps <- 1e-6
-    pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+    pen_factor <- if (adaptive) 1 / (abs(beta_init) + eps)^gamma else rep(1, length(beta_init))
     if (length(custom_penalty_factor) != 1 &&
         length(custom_penalty_factor) != length(pen_factor)) {
         stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",

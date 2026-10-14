@@ -25,7 +25,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
-project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
+project_root = "D:/ising model thesis/-Fourth-Corner-Ising-Model-"
 app_data_dir = file.path(project_root, "Application")
 rdata_dir = file.path(project_root, "Simulation_Results", "Application", "Rdata")
 tab_dir = file.path(project_root, "Simulation_Results", "Application", "tables")
@@ -94,6 +94,9 @@ tidy_lk <- function(M, model) {
            selected = abs(estimate) > tol)
 }
 
+# Model names as plotmath, so facet strips read FCIR_I / FCIR_M with subscripts.
+model_labels = c(FCIR = "FCIR", FCIR_I = "FCIR[I]", FCIR_M = "FCIR[M]")
+
 # Heatmap of fourth-corner blocks; zeros (screened out by the lasso) are left
 # blank rather than painted white, so "shrunk to zero" is visually distinct
 # from "estimated near zero".
@@ -103,21 +106,28 @@ hm_lk <- function(df, title, subtitle) {
     geom_text(aes(label = ifelse(selected, sprintf("%.2f", estimate), "0")),
               size = 3, colour = "grey20") +
     fill_div(df$estimate, "estimate") +
-    facet_wrap(~ model, ncol = 1) +
+    facet_wrap(~ model, ncol = 1, labeller = as_labeller(model_labels, label_parsed)) +
     labs(title = title, subtitle = subtitle, x = NULL, y = NULL) +
     theme_hm
 }
 
 # --- 1. Model overview ------------------------------------------------------
+# Every coefficient of each model in one vector; n_params and n_nonzero are both
+# counted over it so the two columns share a denominator. length(penalty_factor)
+# is not a consistent alternative: the FCIR estimator stores weights without the
+# global intercept (71), the other two over every coefficient (156, 471).
+coef_all = list(
+  FCIR   = c(e_f$est_beta_0, e_f$est_B_mat, e_f$est_alpha_0, e_f$est_A_mat),
+  FCIR_I = c(e_i$est_Beta_mat, e_i$est_alpha_0, e_i$est_A_mat),
+  FCIR_M = c(e_m$est_beta_0, e_m$est_B_mat,
+             e_m$est_Theta_int[upper.tri(e_m$est_Theta_int)]))
+
 overview = data.frame(
   model = c("FCIR", "FCIR_I", "FCIR_M"),
   main_effect = c("fourth-corner B", "free beta_j (P x L)", "fourth-corner B"),
   interaction = c("fourth-corner A", "fourth-corner A", "free Theta_int (435 edges)"),
-  n_params = c(length(e_f$penalty_factor), length(e_i$penalty_factor), length(e_m$penalty_factor)),
-  n_nonzero = c(sum(abs(c(e_f$est_beta_0, e_f$est_B_mat, e_f$est_alpha_0, e_f$est_A_mat)) > tol),
-                sum(abs(c(e_i$est_Beta_mat, e_i$est_alpha_0, e_i$est_A_mat)) > tol),
-                sum(abs(c(e_m$est_beta_0, e_m$est_B_mat,
-                          e_m$est_Theta_int[upper.tri(e_m$est_Theta_int)])) > tol)),
+  n_params = unname(vapply(coef_all, length, integer(1))),
+  n_nonzero = unname(vapply(coef_all, function(v) sum(abs(v) > tol), integer(1))),
   lambda_min = c(e_f$est_lambda, e_i$est_lambda, e_m$est_lambda),
   glm_aliased = c(e_f$init_aliased, e_i$init_aliased, e_m$init_aliased),
   elapsed_s = round(c(e_f$elapsed, e_i$elapsed, e_m$elapsed), 1),
@@ -139,9 +149,9 @@ write.csv(B_long, file.path(tab_dir, "app_B_fourth_corner.csv"), row.names = FAL
 
 ggsave(file.path(plot_dir, "app_B_fourth_corner.png"),
        hm_lk(filter(B_long, !is_reference_group),
-             "Fourth-corner main effect B",
-             sprintf("environment x functional group; %s is the aliased reference group (B[, K] = 0 by construction)",
-                     grp_levels[K])),
+             expression("Fourth-corner main effect " * bold(B)),
+             bquote("environment × functional group; " * .(grp_levels[K]) *
+                      " is the aliased reference group (" * bold(b)[K] == bold(0) * " by construction)")),
        width = 8, height = 6, dpi = 300)
 
 # --- 3. Fourth-corner interaction A: FCIR vs FCIR_I -------------------------
@@ -151,11 +161,47 @@ A_long = bind_rows(tidy_lk(e_f$est_A_mat, "FCIR"), tidy_lk(e_i$est_A_mat, "FCIR_
 write.csv(A_long, file.path(tab_dir, "app_A_fourth_corner.csv"), row.names = FALSE)
 
 ggsave(file.path(plot_dir, "app_A_fourth_corner.png"),
-       hm_lk(A_long, "Fourth-corner interaction A",
-             "cross-group association only: Delta = 0 for all 99 same-group pairs, which alpha_0 absorbs"),
+       hm_lk(A_long, expression("Fourth-corner interaction " * bold(A)),
+             expression("cross-group association only: " * Delta[jj*minute] == bold(0) *
+                          " for all 99 same-group pairs, which " * bold(alpha)[0] * " absorbs")),
        width = 8, height = 6, dpi = 300)
 
-# --- 4. FCIR_I species-specific main effects --------------------------------
+# --- 4. Dense baseline blocks beta_0 and alpha_0 ----------------------------
+# Neither block contains any true zeros to select, so they get their own table
+# instead of sitting inside the B/A selection figures -- the same split the
+# simulation study makes between adaptive_lasso_selection_* (B, A) and
+# adaptive_lasso_dense_diagnostics_* (beta_0, alpha_0).
+#
+# The `identified` column records that the two blocks are not on equal footing:
+#   alpha_0  is identified on its own.
+#   beta_0   is not. Traitmat is a full indicator basis, so the K trait blocks
+#            sum to the beta_0 block and only the combination
+#            x_s' beta_0 + x_s' B t_j is pinned down. Under the unpenalized
+#            initialiser glm()'s QR aliases the last trait column, which fixes
+#            B[, K] = 0 and makes beta_0 read as that group's response. Changing
+#            the reference group changes every beta_0 entry, so beta_0 must
+#            never be reported without naming it.
+#
+# FCIR_I has no beta_0 (free beta_j instead) and FCIR_M has no alpha_0 (free
+# Theta_int instead), so those two combinations are absent by construction.
+baseline_blocks = bind_rows(
+  data.frame(model = "FCIR",   block = "beta_0",  env = env_labels,
+             estimate = as.numeric(e_f$est_beta_0),  stringsAsFactors = FALSE),
+  data.frame(model = "FCIR",   block = "alpha_0", env = env_labels,
+             estimate = as.numeric(e_f$est_alpha_0), stringsAsFactors = FALSE),
+  data.frame(model = "FCIR_I", block = "alpha_0", env = env_labels,
+             estimate = as.numeric(e_i$est_alpha_0), stringsAsFactors = FALSE),
+  data.frame(model = "FCIR_M", block = "beta_0",  env = env_labels,
+             estimate = as.numeric(e_m$est_beta_0),  stringsAsFactors = FALSE)) |>
+  mutate(selected = abs(estimate) > tol,
+         identified = ifelse(block == "beta_0", "joint with B", "yes"),
+         reference_group = ifelse(block == "beta_0", grp_levels[K], ""),
+         env = factor(env, levels = env_labels)) |>
+  arrange(model, block, env)
+write.csv(baseline_blocks, file.path(tab_dir, "app_beta0_alpha0.csv"), row.names = FALSE)
+print(baseline_blocks)
+
+# --- 5. FCIR_I species-specific main effects --------------------------------
 Beta_long = as.data.frame(as.table(structure(e_i$est_Beta_mat,
                                              dimnames = list(species, env_labels))),
                           stringsAsFactors = FALSE) |>
@@ -179,10 +225,17 @@ beta_clip = round(as.numeric(quantile(abs(beta_slopes$estimate[beta_slopes$selec
 
 g_beta = ggplot(beta_slopes, aes(env, species)) +
   geom_tile(aes(fill = ifelse(selected, estimate, NA)), colour = "grey90") +
-  fill_div(beta_slopes$estimate, "beta_j", clip = beta_clip) +
-  labs(title = "FCIR_I species-specific environmental responses",
+  # Cell values, as in hm_lk(); clipped cells show their true (unclipped) value.
+  # Selected values below 0.01 get three decimals so they do not print as 0.00.
+  geom_text(aes(label = ifelse(!selected, "0",
+                               sprintf(ifelse(abs(estimate) < 0.01, "%.3f", "%.2f"), estimate)),
+                colour = abs(estimate) > 0.6 * beta_clip),
+            size = 2.6, show.legend = FALSE) +
+  scale_colour_manual(values = c(`FALSE` = "grey20", `TRUE` = "white"), guide = "none") +
+  fill_div(beta_slopes$estimate, expression(beta[jl]), clip = beta_clip) +
+  labs(title = expression(FCIR[I] * " species-specific environmental responses"),
        subtitle = sprintf("slopes only; grey = exactly zero
-scale clipped at +/-%.2f (%d of %d exceed it, min %.1f)
+scale clipped at ±%.2f (%d of %d exceed it, min %.1f)
 species ordered by functional group, then prevalence",
                           beta_clip, sum(abs(beta_slopes$estimate) > beta_clip),
                           nrow(beta_slopes), min(beta_slopes$estimate)),
@@ -192,15 +245,15 @@ ggsave(file.path(plot_dir, "app_FCIR_I_Beta.png"), g_beta, width = 7.5, height =
 g_beta0 = ggplot(filter(Beta_long, env == "(const)"), aes(estimate, species)) +
   geom_col(aes(fill = group), width = 0.75) +
   geom_vline(xintercept = 0, colour = "grey40") +
-  labs(title = "FCIR_I species intercepts beta_j[1]",
+  labs(title = expression(FCIR[I] * " species intercepts " * beta[j1]),
        subtitle = "baseline log-odds of presence at mean environment; same ordering as the slope heatmap",
-       x = "beta_j[1]", y = NULL, fill = "functional group") +
+       x = expression(beta[j1]), y = NULL, fill = "functional group") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.major.y = element_blank(), legend.position = "right")
 ggsave(file.path(plot_dir, "app_FCIR_I_Beta_intercepts.png"), g_beta0,
        width = 8, height = 8, dpi = 300)
 
-# --- 5. FCIR_M free association matrix Theta_int ----------------------------
+# --- 6. FCIR_M free association matrix Theta_int ----------------------------
 Theta = e_m$est_Theta_int
 dimnames(Theta) = list(species, species)
 ut = which(upper.tri(Theta), arr.ind = TRUE)
@@ -246,10 +299,10 @@ g_theta = ggplot(Theta_long, aes(sp1, sp2)) +
   geom_tile(aes(fill = ifelse(abs(theta) > tol, theta, NA))) +
   geom_vline(xintercept = grp_breaks, colour = "grey40", linewidth = 0.3) +
   geom_hline(yintercept = grp_breaks, colour = "grey40", linewidth = 0.3) +
-  fill_div(Theta_long$theta, "theta", clip = theta_clip) +
-  labs(title = "FCIR_M residual association matrix Theta_int",
+  fill_div(Theta_long$theta, expression(theta[jj*minute]), clip = theta_clip) +
+  labs(title = expression(FCIR[M] * " residual association matrix " * bold(Theta)),
        subtitle = sprintf("%d of %d edges selected; grey = shrunk to exactly zero; lines separate functional groups
-colour scale clipped at +/-%.1f; %d edges exceed it, incl. the %d with zero co-occurrence (min theta = %.1f)",
+colour scale clipped at ±%.1f; %d edges exceed it, incl. the %d with zero co-occurrence (min θ = %.1f)",
                           sum(edges$selected), nrow(edges), theta_clip,
                           sum(abs(edges$theta) > theta_clip), sum(edges$n11 == 0),
                           min(edges$theta)),
@@ -258,7 +311,7 @@ colour scale clipped at +/-%.1f; %d edges exceed it, incl. the %d with zero co-o
 ggsave(file.path(plot_dir, "app_FCIR_M_Theta_heatmap.png"), g_theta,
        width = 9, height = 8, dpi = 300)
 
-# --- 6. Diagnostic: are the extreme edges quasi-separation artefacts? -------
+# --- 7. Diagnostic: are the extreme edges quasi-separation artefacts? -------
 g_diag = ggplot(filter(edges, selected), aes(n11 + 1, theta)) +
   geom_hline(yintercept = 0, colour = "grey60") +
   geom_point(aes(colour = min_cell == 0), alpha = 0.7, size = 1.6) +
@@ -272,7 +325,7 @@ g_diag = ggplot(filter(edges, selected), aes(n11 + 1, theta)) +
 ggsave(file.path(plot_dir, "app_FCIR_M_edge_support.png"), g_diag,
        width = 7, height = 5, dpi = 300)
 
-# --- 7. Diagnostic: does A's same-group blind spot lose signal? -------------
+# --- 8. Diagnostic: does A's same-group blind spot lose signal? -------------
 # FCIR's A is forced to zero on same-group pairs (Delta = 0). FCIR_M is not.
 # If same-group edges in Theta_int are systematically as strong as cross-group
 # ones, then the fourth-corner interaction is discarding real structure.
@@ -296,7 +349,7 @@ FCIR_M is free to fit them",
 ggsave(file.path(plot_dir, "app_Theta_same_vs_cross_group.png"), g_sg,
        width = 6, height = 5, dpi = 300)
 
-# --- 8. Diagnostic: recording-protocol turnover masquerading as association --
+# --- 9. Diagnostic: recording-protocol turnover masquerading as association --
 # The two strongest negative edges (theta = -7.6, -4.7) both have n11 = 0. They
 # are not ecology. ctenocalanus_sp_cf_citer is recorded 1991-2014 and
 # ctenocalanus_sp_cf_citer_2 only 2011-2016 -- the same taxon under two codes
