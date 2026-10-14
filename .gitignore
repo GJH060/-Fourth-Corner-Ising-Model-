@@ -3,8 +3,13 @@
 .RData
 .Ruserdata
 
+# SOCPR application data: not to be made public
+Application/
+reduceddat.RData
+
 # Simulation data (large binary outputs; regenerate with main.r / main_without_sparsity.r)
 *.Rdata
+*.RData
 testexample.RData
 Simulation_Results/Rdata_Sparse/
 Simulation_Results/Rdata_Dense/

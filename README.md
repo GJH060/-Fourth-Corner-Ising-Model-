@@ -37,8 +37,10 @@ scripts read the environment variable `FCIR_PROJECT_ROOT` instead.
 - **SOCPR data** (Chapter 5) come from the Southern Ocean Continuous Plankton
   Recorder Zooplankton Records, Australian Antarctic Data Centre,
   <https://doi.org/10.26179/5ee84f77cc4ec>. The processed subset used in the
-  thesis is `Application/reduceddat.RData`, which contains the response matrix,
-  the environmental covariates and the functional-group indicator matrix.
+  thesis is **not included** in this repository. The application scripts expect
+  it as `Application/reduceddat.RData`, containing the response matrix `resp`,
+  the environmental covariates `X` and the functional-group indicator matrix
+  `Traitmat`.
 
 **Reproducibility.** Cross-validation folds are assigned at random. The FCIR_M
 script sets a seed for each replicate, but the FCIR and FCIR_I scripts do not,
