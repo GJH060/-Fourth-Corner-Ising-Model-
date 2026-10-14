@@ -7,7 +7,7 @@
 # Writes <name>.txt beside each <name>.csv. The CSVs are left untouched.
 
 project_root = "F:/ising model thesis/-Fourth-Corner-Ising-Model-"
-table_dir = file.path(project_root, "Simulation_Results", "Application", "tables")
+table_dir = file.path(project_root, "Application_SOCPR", "tables")
 
 # Verbatim from Code/FCIR/evaluate_selection_adaptive_lasso.r so the borders,
 # padding and alignment match the simulation tables exactly.

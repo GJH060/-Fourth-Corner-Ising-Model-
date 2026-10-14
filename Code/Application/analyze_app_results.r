@@ -28,8 +28,8 @@ library(tidyr)
 project_root = "D:/ising model thesis/-Fourth-Corner-Ising-Model-"
 app_data_dir = file.path(project_root, "Application")
 rdata_dir = file.path(project_root, "Simulation_Results", "Application", "Rdata")
-tab_dir = file.path(project_root, "Simulation_Results", "Application", "tables")
-plot_dir = file.path(project_root, "Simulation_Results", "Application", "plots")
+tab_dir = file.path(project_root, "Application_SOCPR", "tables")
+plot_dir = file.path(project_root, "Application_SOCPR", "plots")
 for (d in c(tab_dir, plot_dir)) if (!dir.exists(d)) dir.create(d, recursive = TRUE)
 
 tol = 1e-8

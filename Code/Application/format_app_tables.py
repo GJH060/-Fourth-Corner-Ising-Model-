@@ -7,7 +7,7 @@ import csv
 from pathlib import Path
 
 ROOT = Path(r"F:/ising model thesis/-Fourth-Corner-Ising-Model-")
-TAB = ROOT / "Simulation_Results" / "Application" / "tables"
+TAB = ROOT / "Application_SOCPR" / "tables"
 OUT = TAB / "app_tables_formatted.html"
 
 ENVS = ["(const)", "salinity", "water_temp", "PAR"]
@@ -341,7 +341,7 @@ html = f"""<!DOCTYPE html>
 <body>
 <h1>南大洋 CPR 应用结果：原始估计值表</h1>
 <p class="lead">
-由 Simulation_Results/Application/tables 中的 CSV 重排而成。
+由 Application_SOCPR/tables 中的 CSV 重排而成。
 第四角矩阵改成环境 × 功能群宽表；β_j 改成物种 × 环境宽表；Θ_int 保留全部 435 条边。
 0 表示 adaptive lasso 恰好压成零，不是四舍五入。
 </p>

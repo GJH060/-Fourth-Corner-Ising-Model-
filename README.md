@@ -48,7 +48,10 @@ thesis.
 ## Repository layout
 
 ```
-Application/            processed SOCPR data (input to Chapter 5)
+Application/            processed SOCPR data (input to Chapter 5; git-ignored)
+Application_SOCPR/
+  plots/                Chapter 5 figures
+  tables/               Chapter 5 tables (CSV, and ASCII .txt)
 Code/
   FCIR/                 full FCIR model: data generation, estimation, evaluation
   FCIR_I/               FCIR_I special case
@@ -56,10 +59,11 @@ Code/
   Application/          Chapter 5 model fits, figures and tables
   *.r                   estimator comparisons shared across the three models
 Simulation_Results/
-  FCIR/, FCIR_I/, FCIR_M/, Application/
+  FCIR/, FCIR_I/, FCIR_M/
     Rdata*/             simulated data and estimates (git-ignored)
     tables/             summary tables (CSV, and ASCII .txt)
     plots/              figures
+  Application/Rdata/    Chapter 5 model fits (git-ignored)
   comparison_tables.tex LaTeX bodies of the estimator comparison tables
 ```
 
@@ -96,7 +100,7 @@ that is not reported in the thesis.
 
 ### Chapter 5: application to the SOCPR data
 
-| Thesis figure | Figure file (`Simulation_Results/Application/plots/...`) |
+| Thesis figure | Figure file (`Application_SOCPR/plots/...`) |
 |---|---|
 | Fig. 5.1, `B` under FCIR and FCIR_M | `app_B_fourth_corner.png` |
 | Fig. 5.2, `A` under FCIR and FCIR_I | `app_A_fourth_corner.png` |
@@ -111,17 +115,17 @@ Pipeline:
    models to `Application/reduceddat.RData`.
 2. They save the fits to `Simulation_Results/Application/Rdata/`.
 3. `Code/Application/analyze_app_results.r` produces all Chapter 5 figures and
-   tables.
+   tables, and writes them to `Application_SOCPR/`.
 4. Optionally, `Code/Application/format_app_tables.r` writes ASCII versions of
    the tables.
 
 ## Thesis tables and their source files
 
-| Thesis table | Source file (`Simulation_Results/...`) |
+| Thesis table | Source file (`Simulation_Results/...` unless stated) |
 |---|---|
-| Table 5.1, model overview | `Application/tables/app_model_overview.csv` |
-| Table 5.2, `beta_0` and `alpha_0` estimates | `Application/tables/app_beta0_alpha0.csv` |
-| Table 5.3, `Theta` within vs across groups | `Application/tables/app_Theta_same_vs_cross_group.csv` |
+| Table 5.1, model overview | `Application_SOCPR/tables/app_model_overview.csv` |
+| Table 5.2, `beta_0` and `alpha_0` estimates | `Application_SOCPR/tables/app_beta0_alpha0.csv` |
+| Table 5.3, `Theta` within vs across groups | `Application_SOCPR/tables/app_Theta_same_vs_cross_group.csv` |
 | Appendix: FCIR adaptive lasso selection (`B`, `A`) | `FCIR/tables/adaptive_lasso_selection_wide_unpenalized_Sparse.csv` |
 | Appendix: FCIR RMSE of `beta_0`, `alpha_0` | `FCIR/tables/adaptive_lasso_dense_diagnostics_wide_unpenalized_Sparse.csv` |
 | Appendix: FCIR ordinary lasso selection | `FCIR/tables/lasso_selection_wide.csv` |
