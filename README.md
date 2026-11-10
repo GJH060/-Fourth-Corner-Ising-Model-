@@ -135,6 +135,23 @@ Pipeline:
 | Appendix: FCIR_M selection and RMSE | `FCIR_M/tables/New_FCIR_M_adaptive_lasso_selection_wide_unpenalized.csv` |
 | Appendix: estimator RMSE comparisons (all three models) | `{FCIR,FCIR_I,FCIR_M}/tables/estimator_RMSE_comparison.csv`, typeset into `comparison_tables.tex` by `Code/format_comparison_tables.r` |
 
+## Post-thesis additions (manuscript)
+
+These were added after thesis submission and are not reported in the thesis.
+
+| Script | Purpose | Output |
+|---|---|---|
+| `Code/FCIR_M/main_lasso_FCIR_M.r` | Ordinary lasso for the FCIR_M simulation (same data, CV folds and seeds as the adaptive lasso) | `Simulation_Results/FCIR_M/Rdata/FCIR_M_estimates_lasso_L3_N*_P*.Rdata` |
+| `Code/FCIR_I/main_lasso_sparse_Beta_FCIR_I.r` | Ordinary lasso for the FCIR_I simulation (sparse Beta, rescaled data) | `Simulation_Results/FCIR_I/Rdata_Sparse_Beta/Rescale_FCIR_I_estimates_lasso_sparse_Beta_N*_P*.Rdata` |
+| `Code/compare_lasso_vs_adaptive_lasso.r` | Ordinary vs adaptive lasso selection and RMSE for all three models, side by side | `Simulation_Results/lasso_vs_adaptive_lasso/` |
+| `Code/benchmark_computation_time.r` | Re-times the unpenalized, lasso and adaptive lasso fits of all three models on the simulated data (the original runs did not record time) | `Simulation_Results/computation_time/` |
+
+The ordinary lasso is the adaptive lasso function called with `adaptive = FALSE`:
+every penalized coefficient gets weight 1, and standardization, site-grouped CV
+and back-transformation are unchanged. The two new lasso scripts store the
+elapsed time of every fit (`est_time_sec`), the wall time of each configuration
+(`wall_time_sec`), the number of workers and the CPU in each `.Rdata` file.
+
 ## Core functions
 
 | File | Purpose |

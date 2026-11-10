@@ -80,6 +80,10 @@ estimate_unpenalized_FCIR_I <- function(Y, X, Tr,
 
     
     if (returnX_only) {
+        # The scaling info is attached so a caller can back-transform estimates
+        # without fitting the glm (used by the ordinary lasso).
+        attr(glm_X, "getsds") <- getsds
+        attr(glm_X, "index_standardized_cols") <- index_standardized_cols
         return(glm_X)
     }
     

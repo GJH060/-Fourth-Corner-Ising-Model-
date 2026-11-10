@@ -6,7 +6,12 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
                                            lambda = "lambda.min",
                                            use_cv = TRUE,
                                            cv_group_by_site = TRUE,
-                                           custom_penalty_factor = 1) {
+                                           custom_penalty_factor = 1,
+                                           adaptive = TRUE) {
+  # adaptive = FALSE gives the ordinary lasso: every penalized coefficient gets
+  # weight 1 instead of 1 / |unpenalized estimate|^gamma. Standardization,
+  # site-grouped CV and back-transformation are unchanged. The unpenalized
+  # initial fit is then not needed and is skipped.
   if (init != "unpenalized") {
     stop("Only init = 'unpenalized' is currently supported.")
   }
@@ -35,27 +40,42 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
   # FCIR_I has species-specific intercepts inside the design and is fit with
   # intercept = FALSE, so columns are scaled by their SD but NOT centered, to
   # keep the linear predictor intact without a single global intercept.
-  init_fit <- estimate_unpenalized_FCIR_I(Y = Y, 
-                                          X = X, 
-                                          Tr = Tr, 
-                                          standardize = TRUE)
-  # getsds <- init_fit$getsds
-  # Xdes_raw <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr, returnX_only = TRUE)
-  # index_intercept_cols <- seq(1, P * L, by = L)
-  # Xdes <- Xdes_raw
-  # Xdes[,-index_intercept_cols] <- sweep(Xdes_raw[,-index_intercept_cols], 2, getsds[-index_intercept_cols], "/")   # standardized design (SD scaling only)
-  glm_Y <- as.numeric(init_fit$glm_model$y)
+  if (adaptive) {
+    init_fit <- estimate_unpenalized_FCIR_I(Y = Y,
+                                            X = X,
+                                            Tr = Tr,
+                                            standardize = TRUE)
+    # getsds <- init_fit$getsds
+    # Xdes_raw <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr, returnX_only = TRUE)
+    # index_intercept_cols <- seq(1, P * L, by = L)
+    # Xdes <- Xdes_raw
+    # Xdes[,-index_intercept_cols] <- sweep(Xdes_raw[,-index_intercept_cols], 2, getsds[-index_intercept_cols], "/")   # standardized design (SD scaling only)
+    glm_Y <- as.numeric(init_fit$glm_model$y)
 
-  # Initial estimator on the standardized scale for the adaptive weights:
-  # rescaling column c by 1/sd_c multiplies its unpenalized coefficient by sd_c.
-  # beta_init <- as.numeric(coef(init_fit$glm_model)) 
-  # beta_init[-index_intercept_cols] <- beta_init[-index_intercept_cols] * getsds[-index_intercept_cols]   # rescale to raw scale
-  beta_init <- as.numeric(coef(init_fit$glm_model))
-  beta_init[!is.finite(beta_init)] <- 0
-  Xdes <- model.matrix(init_fit$glm_model)
-  
-  eps <- 1e-6
-  pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+    # Initial estimator on the standardized scale for the adaptive weights:
+    # rescaling column c by 1/sd_c multiplies its unpenalized coefficient by sd_c.
+    # beta_init <- as.numeric(coef(init_fit$glm_model))
+    # beta_init[-index_intercept_cols] <- beta_init[-index_intercept_cols] * getsds[-index_intercept_cols]   # rescale to raw scale
+    beta_init <- as.numeric(coef(init_fit$glm_model))
+    beta_init[!is.finite(beta_init)] <- 0
+    Xdes <- model.matrix(init_fit$glm_model)
+    getsds <- init_fit$getsds
+    index_standardized_cols <- init_fit$index_standardized_cols
+
+    eps <- 1e-6
+    pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+  } else {
+    # Same standardized design as model.matrix(init_fit$glm_model), without the glm fit.
+    init_fit <- NULL
+    Xdes <- estimate_unpenalized_FCIR_I(Y = Y, X = X, Tr = Tr,
+                                        standardize = TRUE, returnX_only = TRUE)
+    getsds <- attr(Xdes, "getsds")
+    index_standardized_cols <- attr(Xdes, "index_standardized_cols")
+    attr(Xdes, "getsds") <- NULL
+    attr(Xdes, "index_standardized_cols") <- NULL
+    glm_Y <- as.numeric(t(Y))   # rows ordered site by site, species within site
+    pen_factor <- rep(1, ncol(Xdes))
+  }
   if (length(custom_penalty_factor) != 1 &&
       length(custom_penalty_factor) != length(pen_factor)) {
     stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",
@@ -104,7 +124,7 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
 
   # Resolve: standardized coefficient / sd = coefficient on the raw scale.
   final_coefs <- est_coefs
-  final_coefs[init_fit$index_standardized_cols == 1] <- est_coefs[init_fit$index_standardized_cols == 1] / init_fit$getsds[init_fit$index_standardized_cols == 1]
+  final_coefs[index_standardized_cols == 1] <- est_coefs[index_standardized_cols == 1] / getsds[index_standardized_cols == 1]
   
   
   idx <- 1
@@ -122,6 +142,7 @@ estimate_adaptive_lasso_FCIR_I <- function(Y, X, Tr,
     penalty_factor = pen_factor,
     selected_lambda = sel_lambda,
     gamma = gamma,
-    use_cv = use_cv
+    use_cv = use_cv,
+    adaptive = adaptive
   )
 }

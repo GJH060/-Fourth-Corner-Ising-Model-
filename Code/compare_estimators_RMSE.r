@@ -1,5 +1,7 @@
 # RMSE comparison of the adaptive lasso against the comparison estimators
-# (unpenalized MPLE for all three models; ordinary lasso for the full FCIR model).
+# (unpenalized MPLE and ordinary lasso for all three models; the FCIR_I and
+# FCIR_M lasso files come from main_lasso_sparse_Beta_FCIR_I.r and
+# main_lasso_FCIR_M.r and are skipped if they have not been run).
 # Also writes the support-recovery metrics of the ordinary lasso for B and A.
 #
 # RMSE for a parameter block in replicate r is sqrt(mean((est - true)^2)),
@@ -103,6 +105,7 @@ fcir_lasso_sel <- do.call(rbind, fcir_lasso_sel)
 fcir_i_dir <- file.path(sim_dir, "FCIR_I", "Rdata_Sparse_Beta")
 fcir_i_files <- grid_files(c(50, 100, 200, 400, 800), c(30, 60), list(
   adaptive_lasso = file.path(fcir_i_dir, "Rescale_FCIR_I_estimates_adaptive_lasso_sparse_Beta_unpenalized_N%d_P%d.Rdata"),
+  lasso = file.path(fcir_i_dir, "Rescale_FCIR_I_estimates_lasso_sparse_Beta_N%d_P%d.Rdata"),
   unpenalized = file.path(fcir_i_dir, "Rescale_FCIR_I_estimates_unpenalized_sparse_Beta_N%d_P%d.Rdata")))
 fcir_i_blocks <- list(
   Beta = function(e) list(true = as.vector(e$Beta_mat), est = flatten_arr(e$est_Beta_mat)),
@@ -115,6 +118,7 @@ fcir_i_rmse <- evaluate_files(fcir_i_files, fcir_i_blocks, "FCIR_I")
 # adaptive-lasso mean RMSE is taken from New_FCIR_M_adaptive_lasso_selection_unpenalized.csv.
 fcir_m_dir <- file.path(sim_dir, "FCIR_M", "Rdata")
 fcir_m_files <- grid_files(c(50, 100, 200, 400, 800), c(10, 20), list(
+  lasso = file.path(fcir_m_dir, "FCIR_M_estimates_lasso_L3_N%d_P%d.Rdata"),
   unpenalized = file.path(fcir_m_dir, "FCIR_M_estimates_unpenalized_L3_N%d_P%d.Rdata")))
 fcir_m_blocks <- list(
   beta_0 = function(e) list(true = e$beta_0, est = e$est_beta_0),

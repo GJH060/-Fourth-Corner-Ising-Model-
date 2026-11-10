@@ -10,7 +10,12 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
                                            cv_group_by_site = TRUE,
                                            custom_penalty_factor = 1,
                                            unpenalize_B = FALSE,
-                                           sparse = FALSE) {
+                                           sparse = FALSE,
+                                           adaptive = TRUE) {
+  # adaptive = FALSE gives the ordinary lasso: every penalized coefficient gets
+  # weight 1 instead of 1 / |unpenalized estimate|^gamma. Standardization,
+  # site-grouped CV and back-transformation are unchanged. The unpenalized
+  # initial fit is then not needed and is skipped.
   if (init != "unpenalized") {
     stop("Only init = 'unpenalized' is currently supported.")
   }
@@ -41,27 +46,43 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
   # constant ones column). Columns are scaled by SD but NOT centered, the
   # constant intercept column is left unscaled (SD = 0), and it is fit with
   # intercept = FALSE so beta_0[1] is recovered as an unpenalized coefficient.
-  init_fit <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, standardize = FALSE,
-                                          sparse = sparse)
-  getsds <- init_fit$getsds
-  scale_sds <- getsds
-  scale_sds[scale_sds == 0] <- 1   # do not scale constant columns (e.g. intercept)
   Xdes_raw <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, returnX_only = TRUE,
                                           sparse = sparse)
+  if (adaptive) {
+    init_fit <- estimate_unpenalized_FCIR_M(Y = Y, X = X, Tr = Tr, standardize = FALSE,
+                                            sparse = sparse)
+    getsds <- init_fit$getsds
+  } else {
+    # Same column SDs as estimate_unpenalized_FCIR_M() computes, without the glm fit.
+    init_fit <- NULL
+    if (sparse) {
+      n_row <- nrow(Xdes_raw)
+      col_mean <- Matrix::colMeans(Xdes_raw)
+      getsds <- sqrt(pmax(0, (Matrix::colSums(Xdes_raw^2) - n_row * col_mean^2) / (n_row - 1)))
+    } else {
+      getsds <- apply(Xdes_raw, 2, sd)
+    }
+  }
+  scale_sds <- getsds
+  scale_sds[scale_sds == 0] <- 1   # do not scale constant columns (e.g. intercept)
   # sweep() would densify a dgCMatrix; right-multiplying by a diagonal matrix
   # scales the columns in place and keeps the design sparse. glmnet takes a
   # dgCMatrix directly, which is what makes the full-sample fit feasible.
   Xdes <- if (sparse) Xdes_raw %*% Matrix::Diagonal(x = 1 / scale_sds)
           else sweep(Xdes_raw, 2, scale_sds, "/")
-  glm_Y <- as.numeric(init_fit$glm_model$y)
+  glm_Y <- as.numeric(t(Y))   # same row order as the design: site by site, species within site
 
-  # Initial estimator on the standardized scale for the adaptive weights:
-  # rescaling column c by 1/sd_c multiplies its unpenalized coefficient by sd_c.
-  beta_init <- as.numeric(coef(init_fit$glm_model)) * scale_sds
-  beta_init[!is.finite(beta_init)] <- 0
+  if (adaptive) {
+    # Initial estimator on the standardized scale for the adaptive weights:
+    # rescaling column c by 1/sd_c multiplies its unpenalized coefficient by sd_c.
+    beta_init <- as.numeric(coef(init_fit$glm_model)) * scale_sds
+    beta_init[!is.finite(beta_init)] <- 0
 
-  eps <- 1e-6
-  pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+    eps <- 1e-6
+    pen_factor <- 1 / (abs(beta_init) + eps)^gamma
+  } else {
+    pen_factor <- rep(1, ncol(Xdes))
+  }
   if (length(custom_penalty_factor) != 1 &&
       length(custom_penalty_factor) != length(pen_factor)) {
     stop(sprintf("custom_penalty_factor must have length 1 or %d, got %d.",
@@ -132,5 +153,6 @@ estimate_adaptive_lasso_FCIR_M <- function(Y,
        selected_lambda = sel_lambda,
        gamma = gamma,
        use_cv = use_cv,
-       unpenalize_B = unpenalize_B)
+       unpenalize_B = unpenalize_B,
+       adaptive = adaptive)
 }
